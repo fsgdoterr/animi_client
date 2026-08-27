@@ -4,9 +4,11 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const animiApi = createApi({
     reducerPath: "animiApi",
     baseQuery: fetchBaseQuery({
-        baseUrl: API_URL + "/api",
+        baseUrl: API_URL,
         credentials: "include",
     }),
-    tagTypes: [],
+    tagTypes: [
+        "Me"
+    ],
     endpoints: () => ({}),
 });
