@@ -19,6 +19,7 @@ export default function PlayerList() {
     const [deletePlayer, deleteState] = useDeletePlayerMutation();
     const { data, isLoading, isFetching, error } = useGetPlayersQuery({
         search: controls.deferredSearch || undefined,
+        sort: controls.sortMode,
         page: controls.page,
         limit: ADMIN_LIST_PAGE_SIZE,
     });

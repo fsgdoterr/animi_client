@@ -19,6 +19,7 @@ export default function DubTeamList() {
     const [deleteDubTeam, deleteState] = useDeleteDubTeamMutation();
     const { data, isLoading, isFetching, error } = useGetDubTeamsQuery({
         search: controls.deferredSearch || undefined,
+        sort: controls.sortMode,
         page: controls.page,
         limit: ADMIN_LIST_PAGE_SIZE,
     });

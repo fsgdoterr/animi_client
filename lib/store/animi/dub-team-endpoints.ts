@@ -8,6 +8,7 @@ import type {
 
 type DubTeamListParams = {
     search?: string;
+    sort?: "new" | "old" | "title";
     page?: number;
     limit?: number;
 };
@@ -23,6 +24,7 @@ const animiDubTeamEndpoints = animiApi.injectEndpoints({
                     page: params?.page ?? 1,
                     limit: params?.limit ?? 25,
                     search: params?.search || undefined,
+                    sort: params?.sort || undefined,
                 },
             }),
             transformResponse: (

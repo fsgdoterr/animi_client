@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-
 import AdminListPage from "@/components/ui/admin/shared/admin-list-page";
 import EntityActions from "@/components/ui/admin/shared/entity-actions";
 import type { SelectOption } from "@/components/ui/dropdowns/select";
@@ -17,7 +15,6 @@ import {
 } from "@/lib/store/animi/genre-endpoints";
 import type { Genre } from "@/lib/types/entites/genre";
 import { formatDate } from "@/lib/utils/format-date";
-import { sortPageItems } from "@/lib/utils/sort-page-items";
 
 type SortMode = "new" | "old" | "title";
 
@@ -32,22 +29,14 @@ export default function GenreList() {
     const [deleteGenre, deleteState] = useDeleteGenreMutation();
     const { data, isLoading, isFetching, error } = useGetGenresQuery({
         search: controls.deferredSearch || undefined,
+        sort: controls.sortMode,
         page: controls.page,
         limit: ADMIN_LIST_PAGE_SIZE,
     });
 
     useClampPage(controls.page, data?.totalPages, controls.setPage);
 
-    const genres = useMemo(
-        () =>
-            sortPageItems(
-                data?.items,
-                controls.sortMode,
-                "title",
-                (genre) => genre.title,
-            ),
-        [controls.sortMode, data?.items],
-    );
+    const genres = data?.items ?? [];
 
     async function handleDelete(genre: Genre) {
         if (

@@ -5,7 +5,6 @@ import EntityActions from "@/components/ui/admin/shared/entity-actions";
 import type { SelectOption } from "@/components/ui/dropdowns/select";
 import type { PaginatedResult } from "@/lib/types/pagination";
 import { formatDate } from "@/lib/utils/format-date";
-import { sortPageItems } from "@/lib/utils/sort-page-items";
 
 export type TitleSortMode = "new" | "old" | "title";
 
@@ -66,12 +65,7 @@ export default function TitleEntityList<T extends TitleEntity>({
     deleteLabel: (entity: T) => string;
     onDelete: (entity: T) => void;
 }) {
-    const items = sortPageItems(
-        data?.items,
-        sortMode,
-        "title",
-        (entity) => entity.title,
-    );
+    const items = data?.items ?? [];
 
     const actions = (entity: T) => (
         <EntityActions

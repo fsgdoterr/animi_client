@@ -8,6 +8,7 @@ import type {
 
 type UserListParams = {
     search?: string;
+    sort?: "new" | "old" | "username";
     page?: number;
     limit?: number;
 };
@@ -23,6 +24,7 @@ const animiUserEndpoints = animiApi.injectEndpoints({
                     page: params?.page ?? 1,
                     limit: params?.limit ?? 25,
                     search: params?.search || undefined,
+                    sort: params?.sort || undefined,
                 },
             }),
             transformResponse: (

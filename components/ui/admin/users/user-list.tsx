@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo } from "react";
 import { UserRound } from "lucide-react";
 
 import AdminListPage from "@/components/ui/admin/shared/admin-list-page";
@@ -19,7 +18,6 @@ import {
 } from "@/lib/store/animi/user-endpoints";
 import type { PrivateUser } from "@/lib/types/entites/user";
 import { formatDate } from "@/lib/utils/format-date";
-import { sortPageItems } from "@/lib/utils/sort-page-items";
 
 type SortMode = "new" | "old" | "username";
 
@@ -41,22 +39,14 @@ export default function UserList() {
     const [deleteUser, deleteState] = useDeleteUserMutation();
     const { data, isLoading, isFetching, error } = useGetUsersQuery({
         search: controls.deferredSearch || undefined,
+        sort: controls.sortMode,
         page: controls.page,
         limit: ADMIN_LIST_PAGE_SIZE,
     });
 
     useClampPage(controls.page, data?.totalPages, controls.setPage);
 
-    const users = useMemo(
-        () =>
-            sortPageItems(
-                data?.items,
-                controls.sortMode,
-                "username",
-                (user) => user.username,
-            ),
-        [controls.sortMode, data?.items],
-    );
+    const users = data?.items ?? [];
 
     async function handleDelete(user: PrivateUser) {
         if (

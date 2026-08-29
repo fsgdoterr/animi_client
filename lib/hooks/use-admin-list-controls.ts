@@ -17,13 +17,18 @@ export function useAdminListControls<TSort extends string>(
         setPage(1);
     };
 
+    const setSort = (value: TSort) => {
+        setSortMode(value);
+        setPage(1);
+    };
+
     return {
         search,
         deferredSearch,
         sortMode,
         page,
         setSearch,
-        setSortMode,
+        setSortMode: setSort,
         setPage,
     };
 }
