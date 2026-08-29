@@ -51,7 +51,7 @@ export default function TitleEntityEditor<T extends TitleEntity>({
     const {
         register,
         handleSubmit,
-        resetField,
+        setValue,
         formState: { errors, dirtyFields },
     } = useForm<FormValues>({
         defaultValues: { title: entity?.title ?? "" },
@@ -108,7 +108,12 @@ export default function TitleEntityEditor<T extends TitleEntity>({
                             entity
                                 ? {
                                       disabled: !dirtyFields.title,
-                                      onClick: () => resetField("title"),
+                                      onClick: () =>
+                                          setValue("title", entity.title, {
+                                              shouldDirty: true,
+                                              shouldTouch: false,
+                                              shouldValidate: true,
+                                          }),
                                       ariaLabel:
                                           "Скинути назву до початкового значення",
                                   }

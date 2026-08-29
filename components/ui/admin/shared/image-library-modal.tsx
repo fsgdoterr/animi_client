@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ImageIcon, LoaderCircle, Search } from "luci
 import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 
 import Modal from "@/components/ui/admin/shared/modal";
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import { Input } from "@/components/ui/inputs/input";
 import { useGetImagesQuery } from "@/lib/store/animi/image-endpoints";
 import type { PrivateImage } from "@/lib/types/entites/image-type";
@@ -18,6 +19,7 @@ export default function ImageLibraryModal({
     description,
     selectedId,
     aspect = "poster",
+    avatarOnly = false,
     onClose,
     onSelect,
 }: {
@@ -26,6 +28,7 @@ export default function ImageLibraryModal({
     description: string;
     selectedId: number | null;
     aspect?: "poster" | "square";
+    avatarOnly?: boolean;
     onClose: () => void;
     onSelect: (image: PrivateImage) => void;
 }) {
@@ -37,6 +40,7 @@ export default function ImageLibraryModal({
             search: deferredSearch || undefined,
             page,
             limit: IMAGE_PAGE_SIZE,
+            avatarAllowed: avatarOnly ? true : undefined,
         },
         { skip: !open },
     );
@@ -64,7 +68,11 @@ export default function ImageLibraryModal({
                         icon={<Search size={18} strokeWidth={1.8} />}
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Назва аніме"
+                        placeholder={
+                            avatarOnly
+                                ? "ID, користувач, аніме або жанр"
+                                : "ID, аніме, жанр або користувач"
+                        }
                         autoFocus
                     />
                     <p className="mt-2 text-[13px] leading-5 text-white/32">
@@ -179,14 +187,15 @@ function LibraryPageButton({
     children: ReactNode;
 }) {
     return (
-        <button
+        <IconButton
             type="button"
+            variant="secondary"
             onClick={onClick}
             disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-md border border-white/[0.06] bg-white/[0.035] text-white/65 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded-md"
             aria-label={label}
         >
             {children}
-        </button>
+        </IconButton>
     );
 }

@@ -34,7 +34,6 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
         handleSubmit,
         watch,
         setValue,
-        resetField,
         formState: { errors, dirtyFields },
     } = useForm<GenreFormValues>({
         defaultValues: {
@@ -42,6 +41,18 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
             poster: genre?.poster?.id ?? null,
         },
     });
+
+    function resetToInitial<K extends keyof GenreFormValues>(field: K) {
+        const initialValues: GenreFormValues = {
+            title: genre?.title ?? "",
+            poster: genre?.poster?.id ?? null,
+        };
+        setValue(field, initialValues[field], {
+            shouldDirty: true,
+            shouldTouch: false,
+            shouldValidate: true,
+        });
+    }
 
     const poster = watch("poster");
     const isSaving = createState.isLoading || updateState.isLoading;
@@ -109,7 +120,7 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
                                     genre
                                         ? {
                                               disabled: !dirtyFields.title,
-                                              onClick: () => resetField("title"),
+                                              onClick: () => resetToInitial("title"),
                                               ariaLabel:
                                                   "Скинути назву до початкового значення",
                                           }
@@ -146,7 +157,7 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
                                 {genre && (
                                     <FieldResetButton
                                         disabled={!dirtyFields.poster}
-                                        onClick={() => resetField("poster")}
+                                        onClick={() => resetToInitial("poster")}
                                         ariaLabel="Скинути постер до початкового значення"
                                     />
                                 )}

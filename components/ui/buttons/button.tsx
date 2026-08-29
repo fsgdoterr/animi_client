@@ -12,9 +12,12 @@ import {
     type ButtonColor,
 } from "@/lib/types/ui/button-colors";
 
+export type ButtonVariant = "solid" | "soft" | "secondary";
+
 interface BaseButtonProps {
     children: ReactNode;
     color?: ButtonColor;
+    variant?: ButtonVariant;
     className?: string;
 }
 
@@ -39,17 +42,21 @@ function isLinkButton(
     return props.href !== undefined;
 }
 
+const variantClasses: Record<ButtonVariant, string> = {
+    solid: "bg-(--button-color) text-white hover:brightness-110",
+    soft: "border [border-color:color-mix(in_srgb,var(--button-color)_28%,transparent)] [background-color:color-mix(in_srgb,var(--button-color)_9%,transparent)] text-(--button-color) hover:[background-color:color-mix(in_srgb,var(--button-color)_15%,transparent)]",
+    secondary: "border border-white/[0.07] bg-white/[0.035] text-white/65 hover:bg-white/[0.07] hover:text-white/85",
+};
+
 export function Button(props: ButtonProps) {
     const color = props.color ?? "primary";
+    const variant = props.variant ?? "solid";
 
     const classes = cn(
-        "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md cursor-pointer",
-        "bg-(--button-color) px-4 text-[15px] font-medium text-white",
-        "transition hover:brightness-110",
+        "inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md px-4 text-[15px] font-medium transition",
         "disabled:cursor-not-allowed disabled:opacity-50",
-
         buttonColorClasses[color],
-
+        variantClasses[variant],
         props.className,
     );
 
@@ -57,6 +64,7 @@ export function Button(props: ButtonProps) {
         const {
             children,
             color: _color,
+            variant: _variant,
             className: _className,
             disabled,
             ...linkProps
@@ -79,6 +87,7 @@ export function Button(props: ButtonProps) {
     const {
         children,
         color: _color,
+        variant: _variant,
         className: _className,
         ...buttonProps
     } = props;

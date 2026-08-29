@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import ImageLibraryModal from "@/components/ui/admin/shared/image-library-modal";
 import Modal from "@/components/ui/admin/shared/modal";
 import { Button } from "@/components/ui/buttons/button";
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import { Input } from "@/components/ui/inputs/input";
 import type {
     Image as ImageType,
@@ -118,14 +119,15 @@ export default function AdditionalImagesPicker({
                                 <ImageIcon size={24} strokeWidth={1.5} />
                             </div>
                         )}
-                        <button
+                        <IconButton
                             type="button"
+                            variant="secondary"
                             onClick={() => removeItem(card.value)}
-                            className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/70 opacity-100 backdrop-blur-sm transition hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                            className="absolute right-1.5 top-1.5 size-7 rounded-full border-white/15 bg-black/65 text-white/70 opacity-100 backdrop-blur-sm hover:bg-black/80 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
                             aria-label="Видалити додаткове зображення"
                         >
                             <X size={15} />
-                        </button>
+                        </IconButton>
                     </div>
                 ))}
 

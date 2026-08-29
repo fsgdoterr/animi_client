@@ -183,14 +183,15 @@ export default function AnimeList() {
                     </div>
                     {activeFilterCount > 0 && (
                         <div className="mt-3 flex justify-end border-t border-white/[0.05] pt-3">
-                            <button
+                            <Button
                                 type="button"
+                                variant="secondary"
                                 onClick={clearFilters}
-                                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-white/45 transition hover:bg-white/[0.05] hover:text-white/75"
+                                className="h-8 gap-1.5 px-2.5 text-[13px] font-normal"
                             >
                                 <X size={15} />
                                 Очистити фільтри
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </section>

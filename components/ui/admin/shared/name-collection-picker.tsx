@@ -3,6 +3,7 @@
 import { Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import { Input } from "@/components/ui/inputs/input";
 
 export type NameOption = {
@@ -101,16 +102,17 @@ export default function NameCollectionPicker({
                                     </span>
                                 )}
                             </span>
-                            <button
+                            <IconButton
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                     onChange(value.filter((valueItem) => valueItem !== item))
                                 }
-                                className="text-white/35 transition hover:text-white/75"
+                                className="size-5 rounded text-white/35 hover:bg-transparent hover:text-white/75"
                                 aria-label={`Видалити ${item}`}
                             >
                                 <X size={13} />
-                            </button>
+                            </IconButton>
                         </span>
                     );
                 })}
@@ -132,15 +134,16 @@ export default function NameCollectionPicker({
                         }
                     }}
                 />
-                <button
+                <IconButton
                     type="button"
+                    color="green"
                     onClick={() => addValue(input)}
                     disabled={!normalizedInput}
-                    className="absolute right-1.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-(--green) transition hover:bg-white/[0.05] disabled:opacity-20"
+                    className="absolute right-1.5 top-1/2 size-7 -translate-y-1/2 rounded-md border-transparent bg-transparent hover:bg-white/[0.05] disabled:opacity-20"
                     aria-label="Додати"
                 >
                     <Plus size={16} />
-                </button>
+                </IconButton>
 
                 {(suggestions.length > 0 || (normalizedInput && !inputAlreadyExists)) && (
                     <div className="absolute left-0 right-0 top-[calc(100%+5px)] z-40 max-h-64 overflow-y-auto rounded-lg border border-white/[0.06] bg-[#25313b] p-1 shadow-xl shadow-black/30">

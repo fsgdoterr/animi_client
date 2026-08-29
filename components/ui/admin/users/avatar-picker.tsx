@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import ImageLibraryModal from "@/components/ui/admin/shared/image-library-modal";
 import { Button } from "@/components/ui/buttons/button";
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import type {
     Image as ImageType,
     PrivateImage,
@@ -80,14 +81,15 @@ export default function AvatarPicker({
                             sizes="190px"
                             className="object-cover"
                         />
-                        <button
+                        <IconButton
                             type="button"
+                            variant="secondary"
                             onClick={clearAvatar}
-                            className="absolute right-2 top-2 z-20 flex size-8 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/75 backdrop-blur-sm transition hover:bg-black/80 hover:text-white"
+                            className="absolute right-2 top-2 z-20 size-8 rounded-full border-white/15 bg-black/65 text-white/75 backdrop-blur-sm hover:bg-black/80 hover:text-white"
                             aria-label="Прибрати аватар"
                         >
                             <X size={17} strokeWidth={2} />
-                        </button>
+                        </IconButton>
                     </>
                 ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
@@ -109,9 +111,10 @@ export default function AvatarPicker({
             <ImageLibraryModal
                 open={libraryOpen}
                 title="Обрати аватар"
-                description="Аватар можна обрати з уже завантажених зображень."
+                description="Доступні лише зображення, дозволені адміністратором для використання як аватар."
                 selectedId={value}
                 aspect="square"
+                avatarOnly
                 onClose={() => setLibraryOpen(false)}
                 onSelect={handleSelect}
             />

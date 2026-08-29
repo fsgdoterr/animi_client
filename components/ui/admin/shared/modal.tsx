@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import cn from "@/lib/utils/cn";
 
 export default function Modal({
@@ -58,14 +59,15 @@ export default function Modal({
                     <h2 className="truncate text-[18px] font-medium text-white/90">
                         {title}
                     </h2>
-                    <button
+                    <IconButton
                         type="button"
+                        variant="ghost"
                         onClick={onClose}
-                        className="flex size-9 shrink-0 items-center justify-center rounded-md text-white/42 transition hover:bg-white/[0.06] hover:text-white/80"
                         aria-label="Закрити"
+                        className="rounded-md"
                     >
                         <X size={18} />
-                    </button>
+                    </IconButton>
                 </header>
                 <div className="overflow-y-auto p-4 sm:p-5">{children}</div>
             </div>

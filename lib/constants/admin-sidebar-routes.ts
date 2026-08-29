@@ -1,6 +1,7 @@
 import {
     Clapperboard,
     Hash,
+    Image as ImageIcon,
     LayoutDashboard,
     Mic2,
     Play,
@@ -21,6 +22,7 @@ export const adminSidebarRoutes = [
         label: "Додатково",
         items: [
             { href: "/admin/genres", label: "Жанри", icon: Tags },
+            { href: "/admin/images", label: "Зображення", icon: ImageIcon },
             { href: "/admin/codes", label: "Коди", icon: Hash },
             { href: "/admin/players", label: "Плеєри", icon: Play },
             {

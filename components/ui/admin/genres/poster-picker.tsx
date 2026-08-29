@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import ImageLibraryModal from "@/components/ui/admin/shared/image-library-modal";
 import Modal from "@/components/ui/admin/shared/modal";
 import { Button } from "@/components/ui/buttons/button";
+import { IconButton } from "@/components/ui/buttons/icon-button";
 import { Input } from "@/components/ui/inputs/input";
 import type {
     Image as ImageType,
@@ -114,14 +115,15 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
                                 className="object-cover"
                             />
                         )}
-                        <button
+                        <IconButton
                             type="button"
+                            variant="secondary"
                             onClick={clearPoster}
-                            className="absolute right-2 top-2 z-20 flex size-8 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/75 backdrop-blur-sm transition hover:bg-black/80 hover:text-white"
+                            className="absolute right-2 top-2 z-20 size-8 rounded-full border-white/15 bg-black/65 text-white/75 backdrop-blur-sm hover:bg-black/80 hover:text-white"
                             aria-label="Скинути постер"
                         >
                             <X size={17} strokeWidth={2} />
-                        </button>
+                        </IconButton>
                     </>
                 ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
@@ -233,13 +235,13 @@ function AddPosterModal({
                         )}
                     </label>
                     <div className="grid gap-2 min-[420px]:grid-cols-2 sm:flex sm:justify-end">
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
                             onClick={() => onModeChange("choice")}
-                            className="h-10 rounded-md border border-white/[0.07] bg-white/[0.035] px-4 text-[15px] text-white/65 transition hover:bg-white/[0.07] hover:text-white/85"
                         >
                             Назад
-                        </button>
+                        </Button>
                         <Button
                             type="button"
                             color="green"

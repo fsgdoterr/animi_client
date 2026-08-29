@@ -56,7 +56,6 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
         handleSubmit,
         watch,
         setValue,
-        resetField,
         formState: { errors, dirtyFields },
     } = useForm<UserFormValues>({
         defaultValues: {
@@ -73,6 +72,28 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
     const avatar = watch("avatar");
     const role = watch("role");
     const permissions = watch("permissions");
+
+    function resetToInitial<K extends keyof UserFormValues>(field: K) {
+        const initialValues: UserFormValues = {
+            username: user?.username ?? "",
+            email: user?.email ?? "",
+            displayName: user?.displayName ?? "",
+            password: "",
+            avatar: user?.avatar?.id ?? null,
+            role: user?.role ?? UserRole.USER,
+            permissions: [...(user?.permissions ?? [Permissions.DEF])],
+        };
+        const value = initialValues[field];
+        setValue(
+            field,
+            (Array.isArray(value) ? [...value] : value) as UserFormValues[K],
+            {
+                shouldDirty: true,
+                shouldTouch: false,
+                shouldValidate: true,
+            },
+        );
+    }
     const isSaving = createState.isLoading || updateState.isLoading;
     const mutationError = createState.error ?? updateState.error;
 
@@ -156,7 +177,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
                             <div className="grid gap-5 lg:grid-cols-2">
                                 <FormField
                                     label="Username"
-                                    reset={fieldReset(user, dirtyFields.username, () => resetField("username"), "Скинути username")}
+                                    reset={fieldReset(user, dirtyFields.username, () => resetToInitial("username"), "Скинути username")}
                                     error={errors.username?.message}
                                 >
                                     <Input
@@ -182,7 +203,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
 
                                 <FormField
                                     label="Email"
-                                    reset={fieldReset(user, dirtyFields.email, () => resetField("email"), "Скинути email")}
+                                    reset={fieldReset(user, dirtyFields.email, () => resetToInitial("email"), "Скинути email")}
                                     error={errors.email?.message}
                                 >
                                     <Input
@@ -200,7 +221,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
 
                                 <FormField
                                     label="Display name"
-                                    reset={fieldReset(user, dirtyFields.displayName, () => resetField("displayName"), "Скинути display name")}
+                                    reset={fieldReset(user, dirtyFields.displayName, () => resetToInitial("displayName"), "Скинути display name")}
                                 >
                                     <Input
                                         {...register("displayName")}
@@ -211,7 +232,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
 
                                 <FormField
                                     label={user ? "Новий пароль" : "Пароль"}
-                                    reset={fieldReset(user, dirtyFields.password, () => resetField("password"), "Очистити новий пароль")}
+                                    reset={fieldReset(user, dirtyFields.password, () => resetToInitial("password"), "Очистити новий пароль")}
                                     error={errors.password?.message}
                                 >
                                     <Input
@@ -241,7 +262,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
                             <div className="grid gap-5 lg:grid-cols-2">
                                 <FormField
                                     label="Роль"
-                                    reset={fieldReset(user, dirtyFields.role, () => resetField("role"), "Скинути роль")}
+                                    reset={fieldReset(user, dirtyFields.role, () => resetToInitial("role"), "Скинути роль")}
                                 >
                                     <Select
                                         value={role}
@@ -257,7 +278,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
                                 </FormField>
                                 <FormField
                                     label="Permissions"
-                                    reset={fieldReset(user, dirtyFields.permissions, () => resetField("permissions"), "Скинути permissions")}
+                                    reset={fieldReset(user, dirtyFields.permissions, () => resetToInitial("permissions"), "Скинути permissions")}
                                 >
                                     <MultiSelect
                                         value={permissions}
@@ -288,7 +309,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
                                 {user && (
                                     <FieldResetButton
                                         disabled={!dirtyFields.avatar}
-                                        onClick={() => resetField("avatar")}
+                                        onClick={() => resetToInitial("avatar")}
                                         ariaLabel="Скинути аватар"
                                     />
                                 )}

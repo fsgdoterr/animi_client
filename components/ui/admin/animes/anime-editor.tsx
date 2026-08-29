@@ -27,6 +27,7 @@ import {
     SystemInfoCard,
 } from "@/components/ui/admin/shared/editor-layout";
 import { FormField } from "@/components/ui/admin/shared/form-field";
+import FieldResetButton from "@/components/ui/admin/shared/field-reset-button";
 import { Button } from "@/components/ui/buttons/button";
 import { Select, type SelectOption } from "@/components/ui/dropdowns/select";
 import { Input } from "@/components/ui/inputs/input";
@@ -65,8 +66,14 @@ import {
 
 type EditorTab = "main" | "episodes";
 type RatingValue = AnimeRating | "";
+type ResetConfig = {
+    disabled: boolean;
+    onClick: () => void;
+    ariaLabel: string;
+};
 
 type EpisodeVariantForm = {
+    key: string;
     sourceType: EpisodeSourceType;
     endpoint: string;
     dubType: DubType;
@@ -115,9 +122,12 @@ const ratingOptions: SelectOption<RatingValue>[] = [
 export default function AnimeEditor({ anime }: { anime: Anime | null }) {
     const router = useRouter();
     const episodeKeyCounter = useRef(0);
+    const variantKeyCounter = useRef(0);
     const [activeTab, setActiveTab] = useState<EditorTab>("main");
     const [activeEpisodeIndex, setActiveEpisodeIndex] = useState(0);
     const [episodes, setEpisodes] = useState<EpisodeForm[]>([]);
+    const [initialEpisodes, setInitialEpisodes] = useState<EpisodeForm[]>([]);
+    const [initialEpisodesLoaded, setInitialEpisodesLoaded] = useState(!anime);
     const [episodesDirty, setEpisodesDirty] = useState(false);
     const [episodesInitialized, setEpisodesInitialized] = useState(!anime);
     const [localError, setLocalError] = useState<string | null>(null);
@@ -136,9 +146,12 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
     const { data: playerData } = useGetPlayersQuery({ page: 1, limit: 100 });
     const { data: dubTeamData } = useGetDubTeamsQuery({ page: 1, limit: 100 });
     const episodesQuery = useGetAnimeEpisodesForEditorQuery(anime?.id ?? 0, {
-        skip: !anime || activeTab !== "episodes",
+        skip:
+            !anime ||
+            (activeTab !== "episodes" && !(episodesDirty && !initialEpisodesLoaded)),
     });
 
+    const initialValues = useMemo(() => toFormValues(anime), [anime]);
     const {
         register,
         handleSubmit,
@@ -146,7 +159,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
         setValue,
         formState: { errors, dirtyFields },
     } = useForm<AnimeFormValues>({
-        defaultValues: toFormValues(anime),
+        defaultValues: initialValues,
     });
 
     const type = watch("type");
@@ -158,15 +171,68 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
     const producers = watch("producers");
     const relatedAnimeId = watch("relatedAnimeId");
 
+    function resetFormField<K extends keyof AnimeFormValues>(field: K) {
+        const initialValue = initialValues[field];
+        setValue(
+            field,
+            (Array.isArray(initialValue) ? [...initialValue] : initialValue) as AnimeFormValues[K],
+            {
+                shouldDirty: true,
+                shouldTouch: false,
+                shouldValidate: true,
+            },
+        );
+    }
+
+    const fieldReset = (field: keyof AnimeFormValues, label: string) =>
+        anime
+            ? {
+                  disabled: !Boolean(dirtyFields[field]),
+                  onClick: () => resetFormField(field),
+                  ariaLabel: `Скинути ${label} до початкового значення`,
+              }
+            : undefined;
+
+    const typeReset = anime
+        ? {
+              disabled: !Boolean(
+                  dirtyFields.type ||
+                      dirtyFields.episodesTotal ||
+                      dirtyFields.seasonNumber ||
+                      dirtyFields.partNumber,
+              ),
+              onClick: () => {
+                  resetFormField("type");
+                  resetFormField("episodesTotal");
+                  resetFormField("seasonNumber");
+                  resetFormField("partNumber");
+              },
+              ariaLabel: "Скинути тип та нумерацію до початкових значень",
+          }
+        : undefined;
+
     useEffect(() => {
-        if (!anime || !episodesQuery.data || episodesDirty || episodesInitialized) {
+        if (!anime || !episodesQuery.data || initialEpisodesLoaded) {
             return;
         }
 
-        setEpisodes(toEpisodeForms(episodesQuery.data));
-        setActiveEpisodeIndex(0);
-        setEpisodesInitialized(true);
-    }, [anime, episodesDirty, episodesInitialized, episodesQuery.data]);
+        const loadedEpisodes = toEpisodeForms(episodesQuery.data);
+        setInitialEpisodes(cloneEpisodeForms(loadedEpisodes));
+        setInitialEpisodesLoaded(true);
+
+        if (!episodesDirty && !episodesInitialized) {
+            setEpisodes(cloneEpisodeForms(loadedEpisodes));
+            setEpisodesDirty(false);
+            setActiveEpisodeIndex(0);
+            setEpisodesInitialized(true);
+        }
+    }, [
+        anime,
+        episodesDirty,
+        episodesInitialized,
+        episodesQuery.data,
+        initialEpisodesLoaded,
+    ]);
 
     const genreOptions = useMemo(
         () => mergeNameOptions(genreData?.items ?? [], anime?.genres ?? []),
@@ -285,8 +351,89 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
 
     function markEpisodes(nextEpisodes: EpisodeForm[]) {
         setEpisodes(nextEpisodes);
-        setEpisodesDirty(true);
+        setEpisodesDirty(
+            anime
+                ? !areEpisodeFormsEqual(nextEpisodes, initialEpisodes)
+                : nextEpisodes.length > 0,
+        );
         setLocalError(null);
+    }
+
+    function resetAllEpisodes() {
+        if (!anime || !initialEpisodesLoaded) return;
+        setEpisodes(cloneEpisodeForms(initialEpisodes));
+        setEpisodesDirty(false);
+        setActiveEpisodeIndex(0);
+        setLocalError(null);
+    }
+
+    function resetEpisode(index: number) {
+        const current = episodes[index];
+        const initial = initialEpisodes.find((episode) => episode.key === current?.key);
+        if (!current || !initial) return;
+
+        const duplicate = episodes.some(
+            (episode, episodeIndex) =>
+                episodeIndex !== index && Number(episode.number) === Number(initial.number),
+        );
+        if (duplicate) {
+            setLocalError(
+                `Неможливо скинути серію №${initial.number}: цей номер уже використовується.`,
+            );
+            return;
+        }
+
+        markEpisodes(
+            episodes.map((episode, episodeIndex) =>
+                episodeIndex === index ? cloneEpisodeForm(initial) : episode,
+            ),
+        );
+    }
+
+    function resetEpisodeField(
+        index: number,
+        field: "number" | "title",
+    ) {
+        const current = episodes[index];
+        const initial = initialEpisodes.find((episode) => episode.key === current?.key);
+        if (!current || !initial) return;
+
+        if (field === "number") {
+            const duplicate = episodes.some(
+                (episode, episodeIndex) =>
+                    episodeIndex !== index &&
+                    Number(episode.number) === Number(initial.number),
+            );
+            if (duplicate) {
+                setLocalError(
+                    `Неможливо скинути номер до ${initial.number}: він уже використовується.`,
+                );
+                return;
+            }
+        }
+
+        updateEpisode(index, field, initial[field]);
+    }
+
+    function resetVariant(episodeIndex: number, variantKey: string) {
+        const currentEpisode = episodes[episodeIndex];
+        const initialEpisode = initialEpisodes.find(
+            (episode) => episode.key === currentEpisode?.key,
+        );
+        const initialVariant = initialEpisode?.variants.find(
+            (variant) => variant.key === variantKey,
+        );
+        if (!currentEpisode || !initialVariant) return;
+
+        updateEpisode(
+            episodeIndex,
+            "variants",
+            currentEpisode.variants.map((variant) =>
+                variant.key === variantKey
+                    ? { ...initialVariant }
+                    : variant,
+            ),
+        );
     }
 
     function addEpisode() {
@@ -351,6 +498,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
         updateEpisode(episodeIndex, "variants", [
             ...current,
             {
+                key: `new-variant-${++variantKeyCounter.current}`,
                 sourceType: EpisodeSourceType.IFRAME,
                 endpoint: "",
                 dubType: DubType.DUB,
@@ -416,6 +564,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                     number: String(episode.number),
                     title: episode.title ?? "",
                     variants: (episode.variants ?? []).map((variant) => ({
+                        key: `import-variant-${++variantKeyCounter.current}`,
                         sourceType: variant.sourceType ?? EpisodeSourceType.IFRAME,
                         endpoint: variant.endpoint,
                         dubType: variant.dubType,
@@ -496,7 +645,10 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                     unifiedScroll
                     sidebar={
                         <div className="grid gap-4">
-                            <EditorSideCard title="Статус">
+                            <EditorSideCard
+                                title="Статус"
+                                reset={fieldReset("status", "статус")}
+                            >
                                 <Select
                                     value={status}
                                     options={animeStatusOptions}
@@ -509,7 +661,10 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 />
                             </EditorSideCard>
 
-                            <EditorSideCard title="Віковий рейтинг">
+                            <EditorSideCard
+                                title="Віковий рейтинг"
+                                reset={fieldReset("rating", "віковий рейтинг")}
+                            >
                                 <Select
                                     value={rating}
                                     options={ratingOptions}
@@ -522,7 +677,10 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 />
                             </EditorSideCard>
 
-                            <EditorSideCard title="Постер">
+                            <EditorSideCard
+                                title="Постер"
+                                reset={fieldReset("poster", "постер")}
+                            >
                                 <PosterPicker
                                     value={poster}
                                     initialPoster={anime?.poster ?? null}
@@ -535,7 +693,13 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 />
                             </EditorSideCard>
 
-                            <EditorSideCard title="Додаткові зображення">
+                            <EditorSideCard
+                                title="Додаткові зображення"
+                                reset={fieldReset(
+                                    "additionalImages",
+                                    "додаткові зображення",
+                                )}
+                            >
                                 <AdditionalImagesPicker
                                     value={additionalImages}
                                     initialImages={anime?.additionalImages ?? []}
@@ -561,8 +725,12 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                     <EditorPanel className="lg:overflow-visible">
                         <div className="grid gap-7">
                             <Section title="Назва">
-                                <div className="grid gap-2 lg:grid-cols-3">
-                                    <div className="grid gap-1.5">
+                                <div className="grid gap-3 lg:grid-cols-3">
+                                    <FormField
+                                        label="Назва"
+                                        reset={fieldReset("title", "назву")}
+                                        error={errors.title?.message}
+                                    >
                                         <Input
                                             {...register("title", {
                                                 required: "Вкажіть назву аніме.",
@@ -571,26 +739,40 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                                     "Вкажіть назву аніме.",
                                             })}
                                             autoFocus={!anime}
-                                            placeholder="Назва"
+                                            placeholder="Українська назва"
                                         />
-                                        {errors.title?.message && (
-                                            <span className="text-[12px] text-red-300/85">
-                                                {errors.title.message}
-                                            </span>
+                                    </FormField>
+                                    <FormField
+                                        label="Ромадзі"
+                                        reset={fieldReset(
+                                            "originalTitle",
+                                            "назву ромадзі",
                                         )}
-                                    </div>
-                                    <Input
-                                        {...register("originalTitle")}
-                                        placeholder="Ромадзі"
-                                    />
-                                    <Input
-                                        {...register("engTitle")}
-                                        placeholder="Англійська назва"
-                                    />
+                                    >
+                                        <Input
+                                            {...register("originalTitle")}
+                                            placeholder="Romaji"
+                                        />
+                                    </FormField>
+                                    <FormField
+                                        label="Англійська назва"
+                                        reset={fieldReset(
+                                            "engTitle",
+                                            "англійську назву",
+                                        )}
+                                    >
+                                        <Input
+                                            {...register("engTitle")}
+                                            placeholder="English title"
+                                        />
+                                    </FormField>
                                 </div>
                             </Section>
 
-                            <Section title="Опис">
+                            <Section
+                                title="Опис"
+                                reset={fieldReset("description", "опис")}
+                            >
                                 <textarea
                                     {...register("description")}
                                     rows={5}
@@ -599,65 +781,116 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 />
                             </Section>
 
-                            <Section title="Тип та нумерація">
+                            <Section title="Тип та нумерація" reset={typeReset}>
                                 <div
                                     className={cn(
-                                        "grid gap-2 sm:grid-cols-2",
+                                        "grid gap-3 sm:grid-cols-2",
                                         type === AnimeType.TV && "xl:grid-cols-4",
                                     )}
                                 >
-                                    <Select
-                                        label="Тип"
-                                        value={type}
-                                        options={animeTypeOptions}
-                                        onChange={handleTypeChange}
-                                        className="w-full"
-                                    />
+                                    <FormField label="Тип">
+                                        <Select
+                                            value={type}
+                                            options={animeTypeOptions}
+                                            onChange={handleTypeChange}
+                                            className="w-full"
+                                        />
+                                    </FormField>
                                     {type === AnimeType.TV && (
                                         <>
-                                            <Input
-                                                {...register("episodesTotal")}
-                                                type="number"
-                                                min={0}
-                                                placeholder="Кількість епізодів"
-                                            />
-                                            <Input
-                                                {...register("seasonNumber")}
-                                                type="number"
-                                                min={0}
-                                                placeholder="Номер сезону"
-                                            />
+                                            <FormField
+                                                label="Кількість епізодів"
+                                                reset={fieldReset(
+                                                    "episodesTotal",
+                                                    "кількість епізодів",
+                                                )}
+                                            >
+                                                <Input
+                                                    {...register("episodesTotal")}
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="12"
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label="Номер сезону"
+                                                reset={fieldReset(
+                                                    "seasonNumber",
+                                                    "номер сезону",
+                                                )}
+                                            >
+                                                <Input
+                                                    {...register("seasonNumber")}
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="1"
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label="Номер частини"
+                                                reset={fieldReset(
+                                                    "partNumber",
+                                                    "номер частини",
+                                                )}
+                                            >
+                                                <Input
+                                                    {...register("partNumber")}
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="1"
+                                                />
+                                            </FormField>
+                                        </>
+                                    )}
+                                    {type === AnimeType.MOVIE && (
+                                        <FormField
+                                            label="Номер частини"
+                                            reset={fieldReset(
+                                                "partNumber",
+                                                "номер частини",
+                                            )}
+                                        >
                                             <Input
                                                 {...register("partNumber")}
                                                 type="number"
                                                 min={0}
-                                                placeholder="Номер частини"
+                                                placeholder="1"
                                             />
-                                        </>
-                                    )}
-                                    {type === AnimeType.MOVIE && (
-                                        <Input
-                                            {...register("partNumber")}
-                                            type="number"
-                                            min={0}
-                                            placeholder="Номер частини"
-                                        />
+                                        </FormField>
                                     )}
                                 </div>
                             </Section>
 
                             <Section title="Дати">
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                    <FormField label="Премʼєра">
-                                        <Input type="date" {...register("releaseDate")} />
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <FormField
+                                        label="Премʼєра"
+                                        reset={fieldReset(
+                                            "releaseDate",
+                                            "дату премʼєри",
+                                        )}
+                                    >
+                                        <Input
+                                            type="date"
+                                            {...register("releaseDate")}
+                                        />
                                     </FormField>
-                                    <FormField label="Завершення">
+                                    <FormField
+                                        label="Завершення"
+                                        reset={fieldReset(
+                                            "endDate",
+                                            "дату завершення",
+                                        )}
+                                    >
                                         <Input type="date" {...register("endDate")} />
                                     </FormField>
                                 </div>
                             </Section>
 
-                            <Section title="Жанри">
+                            <Section
+                                title="Жанри"
+                                reset={fieldReset("genres", "жанри")}
+                            >
                                 <GenrePicker
                                     value={genres}
                                     options={genreOptions}
@@ -670,7 +903,10 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 />
                             </Section>
 
-                            <Section title="Продюсери">
+                            <Section
+                                title="Продюсери"
+                                reset={fieldReset("producers", "продюсерів")}
+                            >
                                 <ProducerPicker
                                     value={producers}
                                     options={producerOptions}
@@ -684,26 +920,72 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                             </Section>
 
                             <Section title="Додатково">
-                                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                    <Input {...register("country")} placeholder="Країна" />
-                                    <Input
-                                        {...register("duration")}
-                                        type="number"
-                                        min={0}
-                                        placeholder="Тривалість, хв"
-                                    />
-                                    <Input {...register("studio")} placeholder="Студія" />
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    <FormField
+                                        label="Країна"
+                                        reset={fieldReset("country", "країну")}
+                                    >
+                                        <Input
+                                            {...register("country")}
+                                            placeholder="Японія"
+                                        />
+                                    </FormField>
+                                    <FormField
+                                        label="Тривалість, хв"
+                                        reset={fieldReset(
+                                            "duration",
+                                            "тривалість",
+                                        )}
+                                    >
+                                        <Input
+                                            {...register("duration")}
+                                            type="number"
+                                            min={0}
+                                            placeholder="24"
+                                        />
+                                    </FormField>
+                                    <FormField
+                                        label="Студія"
+                                        reset={fieldReset("studio", "студію")}
+                                    >
+                                        <Input
+                                            {...register("studio")}
+                                            placeholder="A-1 Pictures"
+                                        />
+                                    </FormField>
                                 </div>
                             </Section>
 
                             <Section title="Лінки">
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                    <Input {...register("mal")} placeholder="MyAnimeList URL" />
-                                    <Input {...register("al")} placeholder="AniList URL" />
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <FormField
+                                        label="MyAnimeList"
+                                        reset={fieldReset("mal", "MyAnimeList URL")}
+                                    >
+                                        <Input
+                                            {...register("mal")}
+                                            placeholder="https://myanimelist.net/anime/..."
+                                        />
+                                    </FormField>
+                                    <FormField
+                                        label="AniList"
+                                        reset={fieldReset("al", "AniList URL")}
+                                    >
+                                        <Input
+                                            {...register("al")}
+                                            placeholder="https://anilist.co/anime/..."
+                                        />
+                                    </FormField>
                                 </div>
                             </Section>
 
-                            <Section title="Повʼязане">
+                            <Section
+                                title="Повʼязане"
+                                reset={fieldReset(
+                                    "relatedAnimeId",
+                                    "звʼязок з аніме",
+                                )}
+                            >
                                 <RelatedAnimePicker
                                     initialItems={anime?.relatedAnimes ?? []}
                                     currentAnimeId={anime?.id}
@@ -722,16 +1004,30 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
             ) : (
                 <div className="mt-3 grid min-h-[520px] flex-1 gap-4 lg:min-h-0 lg:grid-cols-[300px_minmax(0,1fr)]">
                     <section className="flex min-h-0 flex-col rounded-xl border border-white/[0.025] bg-[#11171c] p-3 shadow-[0_18px_60px_rgba(0,0,0,0.12)] sm:p-4">
-                        <Button
-                            type="button"
-                            color="green"
-                            onClick={addEpisode}
-                            className="w-full"
-                            disabled={Boolean(anime && !episodesInitialized)}
-                        >
-                            <Plus size={17} />
-                            Додати серію
-                        </Button>
+                        <div className="grid gap-2">
+                            <Button
+                                type="button"
+                                color="green"
+                                onClick={addEpisode}
+                                className="w-full"
+                                disabled={Boolean(anime && !episodesInitialized)}
+                            >
+                                <Plus size={17} />
+                                Додати серію
+                            </Button>
+                            {anime && (
+                                <FieldResetButton
+                                    disabled={
+                                        !episodesDirty ||
+                                        !episodesInitialized ||
+                                        !initialEpisodesLoaded
+                                    }
+                                    onClick={resetAllEpisodes}
+                                    ariaLabel="Скинути всі зміни серій"
+                                    className="w-full"
+                                />
+                            )}
+                        </div>
                         <div className="mt-3 grid grid-cols-[70px_1fr_54px] rounded-md bg-[#939799] px-3 py-2 text-[12px] text-white/90">
                             <span>Номер</span>
                             <span>Назва</span>
@@ -794,12 +1090,20 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                         ) : (
                             <EpisodeEditor
                                 episode={episodes[Math.min(activeEpisodeIndex, episodes.length - 1)]}
+                                initialEpisode={initialEpisodes.find(
+                                    (item) =>
+                                        item.key ===
+                                        episodes[Math.min(activeEpisodeIndex, episodes.length - 1)]?.key,
+                                )}
                                 episodeIndex={Math.min(activeEpisodeIndex, episodes.length - 1)}
                                 playerOptions={playerOptions}
                                 dubTeamOptions={dubTeamOptions}
                                 onEpisodeChange={updateEpisode}
+                                onResetEpisode={resetEpisode}
+                                onResetEpisodeField={resetEpisodeField}
                                 onAddVariant={addVariant}
                                 onVariantChange={updateVariant}
+                                onResetVariant={resetVariant}
                                 onRemoveVariant={removeVariant}
                                 onRemoveEpisode={removeEpisode}
                             />
@@ -813,16 +1117,21 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
 
 function EpisodeEditor({
     episode,
+    initialEpisode,
     episodeIndex,
     playerOptions,
     dubTeamOptions,
     onEpisodeChange,
+    onResetEpisode,
+    onResetEpisodeField,
     onAddVariant,
     onVariantChange,
+    onResetVariant,
     onRemoveVariant,
     onRemoveEpisode,
 }: {
     episode: EpisodeForm;
+    initialEpisode?: EpisodeForm;
     episodeIndex: number;
     playerOptions: SelectOption<string>[];
     dubTeamOptions: SelectOption<string>[];
@@ -831,12 +1140,18 @@ function EpisodeEditor({
         key: K,
         value: EpisodeForm[K],
     ) => void;
+    onResetEpisode: (episodeIndex: number) => void;
+    onResetEpisodeField: (
+        episodeIndex: number,
+        field: "number" | "title",
+    ) => void;
     onAddVariant: (episodeIndex: number) => void;
     onVariantChange: (
         episodeIndex: number,
         variantIndex: number,
         patch: Partial<EpisodeVariantForm>,
     ) => void;
+    onResetVariant: (episodeIndex: number, variantKey: string) => void;
     onRemoveVariant: (episodeIndex: number, variantIndex: number) => void;
     onRemoveEpisode: (episodeIndex: number) => void;
 }) {
@@ -849,33 +1164,72 @@ function EpisodeEditor({
                         {episode.number || "—"}
                     </h2>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => onRemoveEpisode(episodeIndex)}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-red-400/15 bg-red-500/[0.06] px-3 text-[13px] text-red-300/75 transition hover:bg-red-500/[0.11] hover:text-red-200"
-                >
-                    <Trash2 size={15} />
-                    Видалити серію
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                    {initialEpisode && (
+                        <FieldResetButton
+                            disabled={areSingleEpisodeEqual(episode, initialEpisode)}
+                            onClick={() => onResetEpisode(episodeIndex)}
+                            ariaLabel="Скинути зміни цієї серії"
+                        />
+                    )}
+                    <Button
+                        type="button"
+                        color="red"
+                        variant="soft"
+                        onClick={() => onRemoveEpisode(episodeIndex)}
+                        className="h-9 px-3 text-[13px] font-normal"
+                    >
+                        <Trash2 size={15} />
+                        Видалити серію
+                    </Button>
+                </div>
             </div>
 
-            <div className="mt-5 grid gap-2 sm:grid-cols-[130px_minmax(0,1fr)]">
-                <Input
-                    type="number"
-                    min={1}
-                    value={episode.number}
-                    onChange={(event) =>
-                        onEpisodeChange(episodeIndex, "number", event.target.value)
+            <div className="mt-5 grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+                <FormField
+                    label="Номер"
+                    reset={
+                        initialEpisode
+                            ? {
+                                  disabled: episode.number === initialEpisode.number,
+                                  onClick: () =>
+                                      onResetEpisodeField(episodeIndex, "number"),
+                                  ariaLabel: "Скинути номер серії",
+                              }
+                            : undefined
                     }
-                    placeholder="Номер"
-                />
-                <Input
-                    value={episode.title}
-                    onChange={(event) =>
-                        onEpisodeChange(episodeIndex, "title", event.target.value)
+                >
+                    <Input
+                        type="number"
+                        min={1}
+                        value={episode.number}
+                        onChange={(event) =>
+                            onEpisodeChange(episodeIndex, "number", event.target.value)
+                        }
+                        placeholder="Номер"
+                    />
+                </FormField>
+                <FormField
+                    label="Назва"
+                    reset={
+                        initialEpisode
+                            ? {
+                                  disabled: episode.title === initialEpisode.title,
+                                  onClick: () =>
+                                      onResetEpisodeField(episodeIndex, "title"),
+                                  ariaLabel: "Скинути назву серії",
+                              }
+                            : undefined
                     }
-                    placeholder="Назва серії (необовʼязково)"
-                />
+                >
+                    <Input
+                        value={episode.title}
+                        onChange={(event) =>
+                            onEpisodeChange(episodeIndex, "title", event.target.value)
+                        }
+                        placeholder="Назва серії (необовʼязково)"
+                    />
+                </FormField>
             </div>
 
             <div className="mt-6 flex items-center justify-between gap-3">
@@ -901,106 +1255,125 @@ function EpisodeEditor({
                         У цієї серії поки немає варіантів відтворення.
                     </div>
                 ) : (
-                    episode.variants.map((variant, variantIndex) => (
-                        <div
-                            key={variantIndex}
-                            className="rounded-xl border border-[#365064] bg-[#0f151a] p-3 sm:p-4"
-                        >
-                            <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-[190px_minmax(0,1fr)_190px]">
-                                <Select
-                                    label="Тип"
-                                    value={variant.dubType}
-                                    options={dubTypeOptions}
-                                    onChange={(value) =>
-                                        onVariantChange(episodeIndex, variantIndex, {
-                                            dubType: value,
-                                        })
-                                    }
-                                    className="w-full"
-                                />
-                                <Select
-                                    label="Команда"
-                                    value={variant.dubTeamId}
-                                    options={dubTeamOptions}
-                                    onChange={(value) =>
-                                        onVariantChange(episodeIndex, variantIndex, {
-                                            dubTeamId: value,
-                                        })
-                                    }
-                                    placeholder="Оберіть команду"
-                                    className="w-full"
-                                    dropdownClassName="max-h-64 overflow-y-auto"
-                                />
-                                <Select
-                                    label="Плеєр"
-                                    value={variant.playerId}
-                                    options={playerOptions}
-                                    onChange={(value) =>
-                                        onVariantChange(episodeIndex, variantIndex, {
-                                            playerId: value,
-                                        })
-                                    }
-                                    placeholder="Оберіть плеєр"
-                                    className="w-full"
-                                    dropdownClassName="max-h-64 overflow-y-auto"
-                                />
-                                <Select
-                                    label="Джерело"
-                                    value={variant.sourceType}
-                                    options={episodeSourceOptions}
-                                    onChange={(value) =>
-                                        onVariantChange(episodeIndex, variantIndex, {
-                                            sourceType: value,
-                                        })
-                                    }
-                                    className="w-full"
-                                />
-                                <Input
-                                    value={variant.endpoint}
-                                    onChange={(event) =>
-                                        onVariantChange(episodeIndex, variantIndex, {
-                                            endpoint: event.target.value,
-                                        })
-                                    }
-                                    placeholder="Посилання / endpoint"
-                                    wrapperClassName="lg:col-span-1 xl:col-span-2"
-                                />
-                            </div>
+                    episode.variants.map((variant, variantIndex) => {
+                        const initialVariant = initialEpisode?.variants.find(
+                            (item) => item.key === variant.key,
+                        );
 
-                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3">
-                                <label className="inline-flex cursor-pointer items-center gap-2 text-[13px] text-white/52">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
+                        return (
+                            <div
+                                key={variant.key}
+                                className="rounded-xl border border-[#365064] bg-[#0f151a] p-3 sm:p-4"
+                            >
+                                {initialVariant && (
+                                    <div className="mb-3 flex justify-end">
+                                        <FieldResetButton
+                                            disabled={areVariantsEqual(variant, initialVariant)}
+                                            onClick={() =>
+                                                onResetVariant(episodeIndex, variant.key)
+                                            }
+                                            ariaLabel="Скинути зміни варіанта"
+                                        />
+                                    </div>
+                                )}
+                                <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-[190px_minmax(0,1fr)_190px]">
+                                    <Select
+                                        label="Тип"
+                                        value={variant.dubType}
+                                        options={dubTypeOptions}
+                                        onChange={(value) =>
                                             onVariantChange(episodeIndex, variantIndex, {
-                                                isActive: !variant.isActive,
+                                                dubType: value,
                                             })
                                         }
-                                        className={cn(
-                                            "flex size-5 items-center justify-center rounded border transition",
-                                            variant.isActive
-                                                ? "border-(--green) bg-(--green) text-white"
-                                                : "border-white/15 bg-white/[0.025] text-transparent",
-                                        )}
-                                        aria-pressed={variant.isActive}
+                                        className="w-full"
+                                    />
+                                    <Select
+                                        label="Команда"
+                                        value={variant.dubTeamId}
+                                        options={dubTeamOptions}
+                                        onChange={(value) =>
+                                            onVariantChange(episodeIndex, variantIndex, {
+                                                dubTeamId: value,
+                                            })
+                                        }
+                                        placeholder="Оберіть команду"
+                                        className="w-full"
+                                        dropdownClassName="max-h-64 overflow-y-auto"
+                                    />
+                                    <Select
+                                        label="Плеєр"
+                                        value={variant.playerId}
+                                        options={playerOptions}
+                                        onChange={(value) =>
+                                            onVariantChange(episodeIndex, variantIndex, {
+                                                playerId: value,
+                                            })
+                                        }
+                                        placeholder="Оберіть плеєр"
+                                        className="w-full"
+                                        dropdownClassName="max-h-64 overflow-y-auto"
+                                    />
+                                    <Select
+                                        label="Джерело"
+                                        value={variant.sourceType}
+                                        options={episodeSourceOptions}
+                                        onChange={(value) =>
+                                            onVariantChange(episodeIndex, variantIndex, {
+                                                sourceType: value,
+                                            })
+                                        }
+                                        className="w-full"
+                                    />
+                                    <Input
+                                        value={variant.endpoint}
+                                        onChange={(event) =>
+                                            onVariantChange(episodeIndex, variantIndex, {
+                                                endpoint: event.target.value,
+                                            })
+                                        }
+                                        placeholder="Посилання / endpoint"
+                                        wrapperClassName="lg:col-span-1 xl:col-span-2"
+                                    />
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-3">
+                                    <label className="inline-flex cursor-pointer items-center gap-2 text-[13px] text-white/52">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onVariantChange(episodeIndex, variantIndex, {
+                                                    isActive: !variant.isActive,
+                                                })
+                                            }
+                                            className={cn(
+                                                "flex size-5 items-center justify-center rounded border transition",
+                                                variant.isActive
+                                                    ? "border-(--green) bg-(--green) text-white"
+                                                    : "border-white/15 bg-white/[0.025] text-transparent",
+                                            )}
+                                            aria-pressed={variant.isActive}
+                                        >
+                                            <Check size={13} strokeWidth={2.5} />
+                                        </button>
+                                        Активний варіант
+                                    </label>
+                                    <Button
+                                        type="button"
+                                        color="red"
+                                        variant="soft"
+                                        onClick={() =>
+                                            onRemoveVariant(episodeIndex, variantIndex)
+                                        }
+                                        className="h-8 gap-1.5 px-2.5 text-[12px] font-normal"
                                     >
-                                        <Check size={13} strokeWidth={2.5} />
-                                    </button>
-                                    Активний варіант
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onRemoveVariant(episodeIndex, variantIndex)
-                                    }
-                                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-red-300/55 transition hover:bg-red-500/[0.07] hover:text-red-200"
-                                >
-                                    <Trash2 size={14} />
-                                    Видалити варіант
-                                </button>
+                                        <Trash2 size={14} />
+                                        Видалити варіант
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </div>
@@ -1009,14 +1382,19 @@ function EpisodeEditor({
 
 function Section({
     title,
+    reset,
     children,
 }: {
     title: string;
+    reset?: ResetConfig;
     children: ReactNode;
 }) {
     return (
         <section>
-            <h2 className="mb-3 text-[16px] font-medium text-white/82">{title}</h2>
+            <div className="mb-3 flex min-h-8 items-center justify-between gap-3">
+                <h2 className="text-[16px] font-medium text-white/82">{title}</h2>
+                {reset && <FieldResetButton {...reset} />}
+            </div>
             {children}
         </section>
     );
@@ -1024,14 +1402,19 @@ function Section({
 
 function EditorSideCard({
     title,
+    reset,
     children,
 }: {
     title: string;
+    reset?: ResetConfig;
     children: ReactNode;
 }) {
     return (
         <section className="rounded-xl border border-white/[0.025] bg-[#11171c] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.12)]">
-            <h2 className="mb-3 text-[16px] font-medium text-white/86">{title}</h2>
+            <div className="mb-3 flex min-h-8 items-center justify-between gap-3">
+                <h2 className="text-[16px] font-medium text-white/86">{title}</h2>
+                {reset && <FieldResetButton {...reset} />}
+            </div>
             {children}
         </section>
     );
@@ -1140,6 +1523,7 @@ function toEpisodeForms(episodes: AnimeEpisode[]): EpisodeForm[] {
             number: String(episode.number),
             title: episode.title ?? "",
             variants: episode.variants.map((variant) => ({
+                key: `variant-${variant.id}`,
                 sourceType: variant.sourceType,
                 endpoint: variant.endpoint,
                 dubType: variant.dubType,
@@ -1149,6 +1533,65 @@ function toEpisodeForms(episodes: AnimeEpisode[]): EpisodeForm[] {
             })),
         }))
         .sort((a, b) => Number(a.number) - Number(b.number));
+}
+
+function cloneEpisodeForms(episodes: EpisodeForm[]): EpisodeForm[] {
+    return episodes.map(cloneEpisodeForm);
+}
+
+function cloneEpisodeForm(episode: EpisodeForm): EpisodeForm {
+    return {
+        ...episode,
+        variants: episode.variants.map((variant) => ({ ...variant })),
+    };
+}
+
+function areVariantsEqual(
+    left: EpisodeVariantForm,
+    right: EpisodeVariantForm,
+) {
+    return (
+        left.sourceType === right.sourceType &&
+        left.endpoint === right.endpoint &&
+        left.dubType === right.dubType &&
+        left.dubTeamId === right.dubTeamId &&
+        left.playerId === right.playerId &&
+        left.isActive === right.isActive
+    );
+}
+
+function areSingleEpisodeEqual(left: EpisodeForm, right: EpisodeForm) {
+    if (left.number !== right.number || left.title !== right.title) return false;
+    if (left.variants.length !== right.variants.length) return false;
+
+    return left.variants.every((variant, index) => {
+        const matching =
+            right.variants.find((item) => item.key === variant.key) ??
+            right.variants[index];
+        return Boolean(matching) && areVariantsEqual(variant, matching);
+    });
+}
+
+function areEpisodeFormsEqual(left: EpisodeForm[], right: EpisodeForm[]) {
+    if (left.length !== right.length) return false;
+
+    const normalize = (episodes: EpisodeForm[]) =>
+        [...episodes]
+            .sort((a, b) => Number(a.number) - Number(b.number))
+            .map((episode) => ({
+                number: episode.number,
+                title: episode.title,
+                variants: episode.variants.map((variant) => ({
+                    sourceType: variant.sourceType,
+                    endpoint: variant.endpoint,
+                    dubType: variant.dubType,
+                    dubTeamId: variant.dubTeamId,
+                    playerId: variant.playerId,
+                    isActive: variant.isActive,
+                })),
+            }));
+
+    return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
 }
 
 function buildAnimePayload(values: AnimeFormValues): AnimePayload {

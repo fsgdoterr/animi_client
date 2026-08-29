@@ -196,13 +196,13 @@ export default function AnimeJsonImportModal({
                 )}
 
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <button
+                    <Button
                         type="button"
+                        variant="secondary"
                         onClick={onClose}
-                        className="h-10 rounded-md border border-white/[0.07] bg-white/[0.035] px-4 text-[15px] text-white/62 transition hover:bg-white/[0.07] hover:text-white/85"
                     >
                         Скасувати
-                    </button>
+                    </Button>
                     <Button
                         type="button"
                         color="green"
