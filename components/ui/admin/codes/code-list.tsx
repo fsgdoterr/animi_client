@@ -17,6 +17,7 @@ import {
 } from "@/lib/store/animi/code-endpoints";
 import type { AnimeCode, AnimeCodeSortMode } from "@/lib/types/entites/code";
 import { formatDate } from "@/lib/utils/format-date";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 import { animeTypeLabel } from "../animes/anime-options";
 
 const sortOptions: SelectOption<AnimeCodeSortMode>[] = [
@@ -39,20 +40,11 @@ export default function CodeList() {
 
     useClampPage(controls.page, data?.totalPages, controls.setPage);
 
-    async function handleDelete(code: AnimeCode) {
-        if (
-            !window.confirm(
-                `Видалити код «${code.code}» для аніме «${code.anime.title}»? Історія переглядів, повʼязана з цим кодом, також буде видалена.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteCode(code.id).unwrap();
-        } catch {
-            // Mutation error is rendered by the list page.
-        }
+    function handleDelete(code: AnimeCode) {
+        return runConfirmedMutation(
+            `Видалити код «${code.code}» для аніме «${code.anime.title}»? Історія переглядів, повʼязана з цим кодом, також буде видалена.`,
+            () => deleteCode(code.id).unwrap(),
+        );
     }
 
     const codes = data?.items ?? [];

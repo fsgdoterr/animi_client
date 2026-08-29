@@ -5,12 +5,12 @@ import {
     type ReactNode,
     useEffect,
     useId,
-    useRef,
     useState,
 } from "react";
 
 import { Check, ChevronDown } from "lucide-react";
 
+import { useDropdown } from "@/lib/hooks/use-dropdown";
 import cn from "@/lib/utils/cn";
 
 export interface SelectOption<T extends string> {
@@ -47,9 +47,7 @@ export function Select<T extends string>({
 }: SelectProps<T>) {
     const id = useId();
 
-    const rootRef = useRef<HTMLDivElement>(null);
-
-    const [isOpen, setIsOpen] = useState(false);
+    const { rootRef, isOpen, setIsOpen } = useDropdown();
     const [activeIndex, setActiveIndex] = useState(() =>
         Math.max(
             0,
@@ -59,22 +57,6 @@ export function Select<T extends string>({
 
     const selectedOption = options.find((option) => option.value === value);
 
-    useEffect(() => {
-        const handleMouseDown = (event: MouseEvent) => {
-            if (
-                rootRef.current &&
-                !rootRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleMouseDown);
-
-        return () => {
-            document.removeEventListener("mousedown", handleMouseDown);
-        };
-    }, []);
 
     useEffect(() => {
         if (!isOpen) {

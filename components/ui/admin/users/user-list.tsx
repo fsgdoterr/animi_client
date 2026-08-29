@@ -18,6 +18,7 @@ import {
 } from "@/lib/store/animi/user-endpoints";
 import type { PrivateUser } from "@/lib/types/entites/user";
 import { formatDate } from "@/lib/utils/format-date";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
 type SortMode = "new" | "old" | "username";
 
@@ -48,20 +49,11 @@ export default function UserList() {
 
     const users = data?.items ?? [];
 
-    async function handleDelete(user: PrivateUser) {
-        if (
-            !window.confirm(
-                `Видалити користувача «${user.username}»? Цю дію не можна скасувати.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteUser(user.id).unwrap();
-        } catch {
-            // Mutation error is rendered by the list page.
-        }
+    function handleDelete(user: PrivateUser) {
+        return runConfirmedMutation(
+            `Видалити користувача «${user.username}»? Цю дію не можна скасувати.`,
+            () => deleteUser(user.id).unwrap(),
+        );
     }
 
     return (

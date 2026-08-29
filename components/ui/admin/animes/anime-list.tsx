@@ -26,6 +26,7 @@ import {
     type AnimeSortMode,
 } from "@/lib/types/entites/anime";
 import { formatDate } from "@/lib/utils/format-date";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 import cn from "@/lib/utils/cn";
 import {
     animeSortOptions,
@@ -78,20 +79,11 @@ export default function AnimeList() {
 
     const activeFilterCount = genres.length + statuses.length + types.length;
 
-    async function handleDelete(anime: AnimeListItem) {
-        if (
-            !window.confirm(
-                `Видалити аніме «${anime.title}»? Серії, варіанти та повʼязані дані також можуть бути видалені.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteAnime(anime.id).unwrap();
-        } catch {
-            // The mutation error is rendered on the page.
-        }
+    function handleDelete(anime: AnimeListItem) {
+        return runConfirmedMutation(
+            `Видалити аніме «${anime.title}»? Серії, варіанти та повʼязані дані також можуть бути видалені.`,
+            () => deleteAnime(anime.id).unwrap(),
+        );
     }
 
     function clearFilters() {

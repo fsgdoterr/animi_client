@@ -13,6 +13,7 @@ import {
     useGetPlayersQuery,
 } from "@/lib/store/animi/player-endpoints";
 import type { Player } from "@/lib/types/entites/player";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
 export default function PlayerList() {
     const controls = useAdminListControls<TitleSortMode>("new");
@@ -26,20 +27,11 @@ export default function PlayerList() {
 
     useClampPage(controls.page, data?.totalPages, controls.setPage);
 
-    async function handleDelete(player: Player) {
-        if (
-            !window.confirm(
-                `Видалити плеєр «${player.title}»? Цю дію не можна скасувати.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deletePlayer(player.id).unwrap();
-        } catch {
-            // Mutation error is rendered by the list page.
-        }
+    function handleDelete(player: Player) {
+        return runConfirmedMutation(
+            `Видалити плеєр «${player.title}»? Цю дію не можна скасувати.`,
+            () => deletePlayer(player.id).unwrap(),
+        );
     }
 
     return (

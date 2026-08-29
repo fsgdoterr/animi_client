@@ -11,6 +11,7 @@ import {
     EditorPanel,
     SystemInfoCard,
 } from "@/components/ui/admin/shared/editor-layout";
+import { createFieldReset } from "@/components/ui/admin/shared/field-reset-config";
 import FieldResetButton from "@/components/ui/admin/shared/field-reset-button";
 import { FormField } from "@/components/ui/admin/shared/form-field";
 import { Input } from "@/components/ui/inputs/input";
@@ -34,6 +35,7 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
         handleSubmit,
         watch,
         setValue,
+        resetField,
         formState: { errors, dirtyFields },
     } = useForm<GenreFormValues>({
         defaultValues: {
@@ -41,18 +43,6 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
             poster: genre?.poster?.id ?? null,
         },
     });
-
-    function resetToInitial<K extends keyof GenreFormValues>(field: K) {
-        const initialValues: GenreFormValues = {
-            title: genre?.title ?? "",
-            poster: genre?.poster?.id ?? null,
-        };
-        setValue(field, initialValues[field], {
-            shouldDirty: true,
-            shouldTouch: false,
-            shouldValidate: true,
-        });
-    }
 
     const poster = watch("poster");
     const isSaving = createState.isLoading || updateState.isLoading;
@@ -116,16 +106,12 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
                             <FormField
                                 label="Назва"
                                 htmlFor="genre-title"
-                                reset={
-                                    genre
-                                        ? {
-                                              disabled: !dirtyFields.title,
-                                              onClick: () => resetToInitial("title"),
-                                              ariaLabel:
-                                                  "Скинути назву до початкового значення",
-                                          }
-                                        : undefined
-                                }
+                                reset={createFieldReset(
+                                    Boolean(genre),
+                                    dirtyFields.title,
+                                    () => resetField("title"),
+                                    "Скинути назву до початкового значення",
+                                )}
                                 error={errors.title?.message}
                             >
                                 <Input
@@ -157,7 +143,7 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
                                 {genre && (
                                     <FieldResetButton
                                         disabled={!dirtyFields.poster}
-                                        onClick={() => resetToInitial("poster")}
+                                        onClick={() => resetField("poster")}
                                         ariaLabel="Скинути постер до початкового значення"
                                     />
                                 )}

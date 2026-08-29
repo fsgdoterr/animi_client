@@ -1,13 +1,9 @@
 "use client";
 
-import { use } from "react";
-import { notFound } from "next/navigation";
-
 import DubTeamEditor from "@/components/ui/admin/dub-teams/dub-team-editor";
-import {
-    EntityEditError,
-    EntityEditLoading,
-} from "@/components/ui/admin/shared/entity-edit-state";
+import EntityEditPage, {
+    useEntityId,
+} from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetDubTeamQuery } from "@/lib/store/animi/dub-team-endpoints";
 
 export default function EditDubTeamPage({
@@ -15,37 +11,26 @@ export default function EditDubTeamPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = use(params);
-    const entityId = Number(id);
-    const isValidId = Number.isInteger(entityId) && entityId > 0;
-    const { data, isLoading, error } = useGetDubTeamQuery(
-        isValidId ? entityId : 0,
-        { skip: !isValidId },
+    const entityId = useEntityId(params);
+    const { data, isLoading, error } = useGetDubTeamQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+
+    return (
+        <EntityEditPage
+            entityId={entityId}
+            data={data}
+            isLoading={isLoading}
+            error={error}
+            labels={{
+                title: "Редагування команди озвучення",
+                loadingText: "Завантаження команди...",
+                errorTitle: "Команду не вдалося завантажити",
+                fallbackMessage: "Перевірте ID команди та спробуйте ще раз.",
+                backHref: "/admin/dub-teams",
+                backLabel: "Повернутися до команд",
+            }}
+            render={(entity) => <DubTeamEditor key={entity.id} team={entity} />}
+        />
     );
-
-    if (!isValidId) notFound();
-
-    if (isLoading) {
-        return (
-            <EntityEditLoading
-                title="Редагування команди озвучення"
-                loadingText="Завантаження команди..."
-            />
-        );
-    }
-
-    if (error || !data) {
-        return (
-            <EntityEditError
-                title="Редагування команди озвучення"
-                errorTitle="Команду не вдалося завантажити"
-                error={error}
-                fallbackMessage="Перевірте ID команди та спробуйте ще раз."
-                backHref="/admin/dub-teams"
-                backLabel="Повернутися до команд"
-            />
-        );
-    }
-
-    return <DubTeamEditor key={data.id} team={data} />;
 }

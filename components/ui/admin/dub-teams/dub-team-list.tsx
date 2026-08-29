@@ -13,6 +13,7 @@ import {
     useGetDubTeamsQuery,
 } from "@/lib/store/animi/dub-team-endpoints";
 import type { DubTeam } from "@/lib/types/entites/dub-team";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
 export default function DubTeamList() {
     const controls = useAdminListControls<TitleSortMode>("new");
@@ -26,20 +27,11 @@ export default function DubTeamList() {
 
     useClampPage(controls.page, data?.totalPages, controls.setPage);
 
-    async function handleDelete(team: DubTeam) {
-        if (
-            !window.confirm(
-                `Видалити команду озвучення «${team.title}»? Цю дію не можна скасувати.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteDubTeam(team.id).unwrap();
-        } catch {
-            // Mutation error is rendered by the list page.
-        }
+    function handleDelete(team: DubTeam) {
+        return runConfirmedMutation(
+            `Видалити команду озвучення «${team.title}»? Цю дію не можна скасувати.`,
+            () => deleteDubTeam(team.id).unwrap(),
+        );
     }
 
     return (

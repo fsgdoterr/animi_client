@@ -15,6 +15,7 @@ import {
 } from "@/lib/store/animi/genre-endpoints";
 import type { Genre } from "@/lib/types/entites/genre";
 import { formatDate } from "@/lib/utils/format-date";
+import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
 type SortMode = "new" | "old" | "title";
 
@@ -38,20 +39,11 @@ export default function GenreList() {
 
     const genres = data?.items ?? [];
 
-    async function handleDelete(genre: Genre) {
-        if (
-            !window.confirm(
-                `Видалити жанр «${genre.title}»? Цю дію не можна скасувати.`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteGenre(genre.id).unwrap();
-        } catch {
-            // Mutation error is rendered by the list page.
-        }
+    function handleDelete(genre: Genre) {
+        return runConfirmedMutation(
+            `Видалити жанр «${genre.title}»? Цю дію не можна скасувати.`,
+            () => deleteGenre(genre.id).unwrap(),
+        );
     }
 
     return (

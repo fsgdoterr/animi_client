@@ -10,6 +10,7 @@ import {
     EditorPanel,
     SystemInfoCard,
 } from "@/components/ui/admin/shared/editor-layout";
+import { createFieldReset } from "@/components/ui/admin/shared/field-reset-config";
 import { FormField } from "@/components/ui/admin/shared/form-field";
 import { Input } from "@/components/ui/inputs/input";
 
@@ -51,7 +52,7 @@ export default function TitleEntityEditor<T extends TitleEntity>({
     const {
         register,
         handleSubmit,
-        setValue,
+        resetField,
         formState: { errors, dirtyFields },
     } = useForm<FormValues>({
         defaultValues: { title: entity?.title ?? "" },
@@ -104,21 +105,12 @@ export default function TitleEntityEditor<T extends TitleEntity>({
                     <FormField
                         label="Назва"
                         htmlFor="entity-title"
-                        reset={
-                            entity
-                                ? {
-                                      disabled: !dirtyFields.title,
-                                      onClick: () =>
-                                          setValue("title", entity.title, {
-                                              shouldDirty: true,
-                                              shouldTouch: false,
-                                              shouldValidate: true,
-                                          }),
-                                      ariaLabel:
-                                          "Скинути назву до початкового значення",
-                                  }
-                                : undefined
-                        }
+                        reset={createFieldReset(
+                            Boolean(entity),
+                            dirtyFields.title,
+                            () => resetField("title"),
+                            "Скинути назву до початкового значення",
+                        )}
                         error={errors.title?.message}
                     >
                         <Input

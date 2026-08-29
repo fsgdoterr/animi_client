@@ -1,9 +1,10 @@
 "use client";
 
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent, useId } from "react";
 
 import { Check, ChevronDown, Minus } from "lucide-react";
 
+import { useDropdown } from "@/lib/hooks/use-dropdown";
 import cn from "@/lib/utils/cn";
 
 export interface MultiSelectOption<T extends string> {
@@ -66,26 +67,8 @@ export function MultiSelect<T extends string>(props: MultiSelectProps<T>) {
     } = props;
 
     const id = useId();
-    const rootRef = useRef<HTMLDivElement>(null);
+    const { rootRef, isOpen, setIsOpen } = useDropdown();
 
-    const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        const handleMouseDown = (event: MouseEvent) => {
-            if (
-                rootRef.current &&
-                !rootRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleMouseDown);
-
-        return () => {
-            document.removeEventListener("mousedown", handleMouseDown);
-        };
-    }, []);
 
     const getOptionState = (value: T): OptionState => {
         if (props.mode === "filter") {

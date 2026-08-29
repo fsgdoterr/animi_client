@@ -2,11 +2,7 @@ import type { ReactNode } from "react";
 
 import FieldResetButton from "@/components/ui/admin/shared/field-reset-button";
 
-interface ResetConfig {
-    disabled: boolean;
-    onClick: () => void;
-    ariaLabel: string;
-}
+import type { FieldResetConfig } from "@/components/ui/admin/shared/field-reset-config";
 
 export function FormField({
     label,
@@ -17,7 +13,7 @@ export function FormField({
 }: {
     label: ReactNode;
     htmlFor?: string;
-    reset?: ResetConfig;
+    reset?: FieldResetConfig;
     error?: ReactNode;
     children: ReactNode;
 }) {

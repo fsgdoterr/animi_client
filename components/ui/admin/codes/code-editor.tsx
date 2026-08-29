@@ -12,6 +12,7 @@ import {
     EditorPanel,
     SystemInfoCard,
 } from "@/components/ui/admin/shared/editor-layout";
+import { createFieldReset } from "@/components/ui/admin/shared/field-reset-config";
 import { FormField } from "@/components/ui/admin/shared/form-field";
 import { Input } from "@/components/ui/inputs/input";
 import {
@@ -35,6 +36,7 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
         handleSubmit,
         watch,
         setValue,
+        resetField,
         formState: { errors, dirtyFields },
     } = useForm<CodeFormValues>({
         defaultValues: {
@@ -45,17 +47,14 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
 
     const animeId = watch("animeId");
 
-    function resetToInitial<K extends keyof CodeFormValues>(field: K) {
-        const initialValues: CodeFormValues = {
-            code: code?.code ?? "",
-            animeId: code?.animeId ?? null,
-        };
-        setValue(field, initialValues[field], {
-            shouldDirty: true,
-            shouldTouch: false,
-            shouldValidate: true,
-        });
-    }
+    const fieldReset = (field: keyof CodeFormValues, ariaLabel: string) =>
+        createFieldReset(
+            Boolean(code),
+            dirtyFields[field],
+            () => resetField(field),
+            ariaLabel,
+        );
+
     const isSaving = createState.isLoading || updateState.isLoading;
     const mutationError = createState.error ?? updateState.error;
 
@@ -125,15 +124,10 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
                                 <FormField
                                     label="Код"
                                     htmlFor="anime-code"
-                                    reset={
-                                        code
-                                            ? {
-                                                  disabled: !dirtyFields.code,
-                                                  onClick: () => resetToInitial("code"),
-                                                  ariaLabel: "Скинути код до початкового значення",
-                                              }
-                                            : undefined
-                                    }
+                                    reset={fieldReset(
+                                        "code",
+                                        "Скинути код до початкового значення",
+                                    )}
                                     error={errors.code?.message}
                                 >
                                     <Input
@@ -159,15 +153,10 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
                         <section className="border-t border-white/[0.055] pt-6">
                             <FormField
                                 label="Аніме"
-                                reset={
-                                    code
-                                        ? {
-                                              disabled: !dirtyFields.animeId,
-                                              onClick: () => resetToInitial("animeId"),
-                                              ariaLabel: "Скинути аніме до початкового значення",
-                                          }
-                                        : undefined
-                                }
+                                reset={fieldReset(
+                                    "animeId",
+                                    "Скинути аніме до початкового значення",
+                                )}
                                 error={errors.animeId?.message}
                             >
                                 <input

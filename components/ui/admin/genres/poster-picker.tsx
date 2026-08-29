@@ -1,23 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { ImageIcon, Link2, X } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { ImageIcon, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import ImageLibraryModal from "@/components/ui/admin/shared/image-library-modal";
-import Modal from "@/components/ui/admin/shared/modal";
+import ImageSourceModal from "@/components/ui/admin/shared/image-source-modal";
 import { Button } from "@/components/ui/buttons/button";
 import { IconButton } from "@/components/ui/buttons/icon-button";
-import { Input } from "@/components/ui/inputs/input";
 import type {
     Image as ImageType,
     PrivateImage,
 } from "@/lib/types/entites/image-type";
 
 type PosterValue = string | number | null;
-type AddPosterMode = "choice" | "url";
-type UrlFormValues = { url: string };
 
 type Props = {
     value: PosterValue;
@@ -29,8 +25,7 @@ type Props = {
 };
 
 export default function PosterPicker({ value, initialPoster, onChange }: Props) {
-    const [addModalOpen, setAddModalOpen] = useState(false);
-    const [addMode, setAddMode] = useState<AddPosterMode>("choice");
+    const [sourceOpen, setSourceOpen] = useState(false);
     const [libraryOpen, setLibraryOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<
         PrivateImage | ImageType | null
@@ -60,11 +55,6 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
         return image ? `/uploads/${encodeURIComponent(image.path)}` : null;
     }, [initialPoster, selectedImage, value]);
 
-    function openAddModal() {
-        setAddMode("choice");
-        setAddModalOpen(true);
-    }
-
     function handleSelectImage(image: PrivateImage) {
         setSelectedImage(image);
         onChange(image.id, image);
@@ -74,7 +64,7 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
     function handleUrl(url: string) {
         setSelectedImage(null);
         onChange(url);
-        setAddModalOpen(false);
+        setSourceOpen(false);
     }
 
     function clearPoster() {
@@ -89,7 +79,7 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
                     <>
                         <button
                             type="button"
-                            onClick={openAddModal}
+                            onClick={() => setSourceOpen(true)}
                             className="group absolute inset-0 z-10 cursor-pointer"
                             aria-label="Змінити постер"
                         >
@@ -98,7 +88,7 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
                             </span>
                         </button>
                         {typeof value === "string" ? (
-                            // Remote URLs are user-provided and cannot be known in next.config.
+                            // User-provided external URL.
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={previewSrc}
@@ -130,21 +120,26 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
                         <div className="flex size-12 items-center justify-center rounded-full bg-white/[0.045] text-white/25">
                             <ImageIcon size={24} strokeWidth={1.5} />
                         </div>
-                        <Button type="button" color="green" onClick={openAddModal}>
+                        <Button
+                            type="button"
+                            color="green"
+                            onClick={() => setSourceOpen(true)}
+                        >
                             Додати постер
                         </Button>
                     </div>
                 )}
             </div>
 
-            <AddPosterModal
-                open={addModalOpen}
-                mode={addMode}
-                onModeChange={setAddMode}
-                onClose={() => setAddModalOpen(false)}
+            <ImageSourceModal
+                open={sourceOpen}
+                title="Додати постер"
+                urlDescription="Вкажіть прямий URL зображення."
+                libraryDescription="Знайдіть зображення за назвою аніме."
+                onClose={() => setSourceOpen(false)}
                 onUrl={handleUrl}
                 onOpenLibrary={() => {
-                    setAddModalOpen(false);
+                    setSourceOpen(false);
                     setLibraryOpen(true);
                 }}
             />
@@ -160,137 +155,4 @@ export default function PosterPicker({ value, initialPoster, onChange }: Props) 
             />
         </>
     );
-}
-
-function AddPosterModal({
-    open,
-    mode,
-    onModeChange,
-    onClose,
-    onUrl,
-    onOpenLibrary,
-}: {
-    open: boolean;
-    mode: AddPosterMode;
-    onModeChange: (mode: AddPosterMode) => void;
-    onClose: () => void;
-    onUrl: (url: string) => void;
-    onOpenLibrary: () => void;
-}) {
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm<UrlFormValues>({ defaultValues: { url: "" } });
-
-    useEffect(() => {
-        if (open) reset({ url: "" });
-    }, [open, reset]);
-
-    const submitUrl = handleSubmit((values) => onUrl(values.url.trim()));
-
-    return (
-        <Modal open={open} title="Додати постер" onClose={onClose}>
-            {mode === "choice" ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <PosterSourceButton
-                        icon={<Link2 size={24} strokeWidth={1.6} />}
-                        title="Ввести посилання"
-                        description="Вкажіть прямий URL зображення."
-                        onClick={() => onModeChange("url")}
-                    />
-                    <PosterSourceButton
-                        icon={<ImageIcon size={24} strokeWidth={1.6} />}
-                        title="Обрати з наявних"
-                        description="Знайдіть зображення за назвою аніме."
-                        onClick={onOpenLibrary}
-                    />
-                </div>
-            ) : (
-                <div className="grid gap-4">
-                    <label className="grid gap-2">
-                        <span className="text-[14px] text-white/70">
-                            URL зображення
-                        </span>
-                        <Input
-                            {...register("url", {
-                                required: "Вкажіть посилання на зображення.",
-                                validate: validateImageUrl,
-                            })}
-                            autoFocus
-                            inputMode="url"
-                            placeholder="https://example.com/poster.jpg"
-                            onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                    event.preventDefault();
-                                    void submitUrl();
-                                }
-                            }}
-                        />
-                        {errors.url && (
-                            <span className="text-[13px] text-red-300/85">
-                                {errors.url.message}
-                            </span>
-                        )}
-                    </label>
-                    <div className="grid gap-2 min-[420px]:grid-cols-2 sm:flex sm:justify-end">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => onModeChange("choice")}
-                        >
-                            Назад
-                        </Button>
-                        <Button
-                            type="button"
-                            color="green"
-                            onClick={() => void submitUrl()}
-                            className="w-full sm:w-auto"
-                        >
-                            Використати
-                        </Button>
-                    </div>
-                </div>
-            )}
-        </Modal>
-    );
-}
-
-function PosterSourceButton({
-    icon,
-    title,
-    description,
-    onClick,
-}: {
-    icon: ReactNode;
-    title: string;
-    description: string;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="group rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 text-left transition hover:border-white/[0.13] hover:bg-white/[0.045] sm:p-5"
-        >
-            <span className="mb-3 block text-(--green) sm:mb-4">{icon}</span>
-            <span className="block text-[16px] text-white/88">{title}</span>
-            <span className="mt-1 block text-[13px] leading-5 text-white/36">
-                {description}
-            </span>
-        </button>
-    );
-}
-
-function validateImageUrl(value: string) {
-    try {
-        const url = new URL(value.trim());
-        return (
-            ["http:", "https:"].includes(url.protocol) ||
-            "Посилання має починатися з http:// або https://"
-        );
-    } catch {
-        return "Вкажіть коректне посилання.";
-    }
 }
