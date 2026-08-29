@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { Link2, Plus, Search, Unlink } from "lucide-react";
 
 import Modal from "@/components/ui/admin/shared/modal";
@@ -21,10 +21,12 @@ import { animeStatusLabel, animeTypeLabel } from "./anime-options";
 export default function RelatedAnimePicker({
     initialItems,
     currentAnimeId,
+    value,
     onChange,
 }: {
     initialItems: RelatedAnime[];
     currentAnimeId?: number;
+    value: number | null;
     onChange: (id: number | null) => void;
 }) {
     const [open, setOpen] = useState(false);
@@ -47,6 +49,40 @@ export default function RelatedAnimePicker({
     const results = (data?.items ?? []).filter(
         (anime) => anime.id !== currentAnimeId,
     );
+
+    useEffect(() => {
+        if (value == null) {
+            if (groupItems.length > 0) setGroupItems([]);
+            return;
+        }
+
+        if (groupItems.some((item) => item.id === value)) return;
+
+        let cancelled = false;
+        void loadAnime(value)
+            .unwrap()
+            .then((anchor) => {
+                if (cancelled) return;
+                const anchorItem = toRelatedAnime(anchor);
+                setGroupItems(
+                    uniqueRelatedAnimes([anchorItem, ...anchor.relatedAnimes]).filter(
+                        (item) => item.id !== currentAnimeId,
+                    ),
+                );
+                setSelectionError(null);
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setSelectionError(
+                        "Не вдалося завантажити аніме, вказане в JSON.",
+                    );
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [currentAnimeId, groupItems, loadAnime, value]);
 
     async function selectAnime(anime: AnimeListItem) {
         setSelectionError(null);

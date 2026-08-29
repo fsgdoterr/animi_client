@@ -14,6 +14,7 @@ export function EditorHeader({
     subtitle,
     isSaving,
     submitLabel,
+    actions,
 }: {
     backHref: string;
     backLabel: string;
@@ -21,6 +22,7 @@ export function EditorHeader({
     subtitle?: string;
     isSaving: boolean;
     submitLabel: string;
+    actions?: ReactNode;
 }) {
     return (
         <header className="flex shrink-0 flex-col gap-3 px-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -43,19 +45,22 @@ export function EditorHeader({
                     )}
                 </div>
             </div>
-            <Button
-                color="green"
-                type="submit"
-                disabled={isSaving}
-                className="w-full sm:w-auto"
-            >
-                {isSaving ? (
-                    <LoaderCircle size={17} className="animate-spin" />
-                ) : (
-                    <Save size={17} strokeWidth={2} />
-                )}
-                {submitLabel}
-            </Button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                {actions}
+                <Button
+                    color="green"
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto"
+                >
+                    {isSaving ? (
+                        <LoaderCircle size={17} className="animate-spin" />
+                    ) : (
+                        <Save size={17} strokeWidth={2} />
+                    )}
+                    {submitLabel}
+                </Button>
+            </div>
         </header>
     );
 }

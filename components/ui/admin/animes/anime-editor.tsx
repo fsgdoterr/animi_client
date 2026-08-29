@@ -7,11 +7,14 @@ import {
     useRef,
     useState,
 } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Braces, Check, Plus, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import AdditionalImagesPicker from "@/components/ui/admin/animes/additional-images-picker";
+import AnimeJsonImportModal, {
+    type AnimeImportData,
+} from "@/components/ui/admin/animes/anime-json-import-modal";
 import GenrePicker from "@/components/ui/admin/animes/genre-picker";
 import ProducerPicker from "@/components/ui/admin/animes/producer-picker";
 import RelatedAnimePicker from "@/components/ui/admin/animes/related-anime-picker";
@@ -118,6 +121,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
     const [episodesDirty, setEpisodesDirty] = useState(false);
     const [episodesInitialized, setEpisodesInitialized] = useState(!anime);
     const [localError, setLocalError] = useState<string | null>(null);
+    const [jsonImportOpen, setJsonImportOpen] = useState(false);
     const [persistedAnimeId, setPersistedAnimeId] = useState<number | null>(
         anime?.id ?? null,
     );
@@ -152,6 +156,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
     const additionalImages = watch("additionalImages");
     const genres = watch("genres");
     const producers = watch("producers");
+    const relatedAnimeId = watch("relatedAnimeId");
 
     useEffect(() => {
         if (!anime || !episodesQuery.data || episodesDirty || episodesInitialized) {
@@ -380,6 +385,54 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
         );
     }
 
+    function importJsonData(data: AnimeImportData) {
+        setLocalError(null);
+
+        const patch = toImportFormPatch(data);
+        for (const [key, value] of Object.entries(patch) as [
+            keyof AnimeFormValues,
+            AnimeFormValues[keyof AnimeFormValues],
+        ][]) {
+            setValue(key, value, {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true,
+            });
+        }
+
+        if (data.type && data.type !== AnimeType.TV) {
+            setValue("episodesTotal", "", { shouldDirty: true });
+            setValue("seasonNumber", "", { shouldDirty: true });
+
+            if (data.type !== AnimeType.MOVIE) {
+                setValue("partNumber", "", { shouldDirty: true });
+            }
+        }
+
+        if (data.episodes !== undefined) {
+            const importedEpisodes: EpisodeForm[] = data.episodes
+                .map((episode) => ({
+                    key: `import-${++episodeKeyCounter.current}`,
+                    number: String(episode.number),
+                    title: episode.title ?? "",
+                    variants: (episode.variants ?? []).map((variant) => ({
+                        sourceType: variant.sourceType ?? EpisodeSourceType.IFRAME,
+                        endpoint: variant.endpoint,
+                        dubType: variant.dubType,
+                        dubTeamId: String(variant.dubTeamId),
+                        playerId: String(variant.playerId),
+                        isActive: variant.isActive ?? true,
+                    })),
+                }))
+                .sort((a, b) => Number(a.number) - Number(b.number));
+
+            setEpisodes(importedEpisodes);
+            setEpisodesDirty(true);
+            setEpisodesInitialized(true);
+            setActiveEpisodeIndex(0);
+        }
+    }
+
     return (
         <form
             onSubmit={submit}
@@ -392,6 +445,23 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                 subtitle={anime ? `${anime.title} · #${anime.id}` : undefined}
                 isSaving={isSaving}
                 submitLabel={anime ? "Зберегти" : "Створити"}
+                actions={
+                    <Button
+                        type="button"
+                        color="primary-3"
+                        onClick={() => setJsonImportOpen(true)}
+                        className="w-full sm:w-auto"
+                    >
+                        <Braces size={17} />
+                        Імпорт JSON
+                    </Button>
+                }
+            />
+
+            <AnimeJsonImportModal
+                open={jsonImportOpen}
+                onClose={() => setJsonImportOpen(false)}
+                onImport={importJsonData}
             />
 
             <div className="mt-2 flex shrink-0 items-center gap-1 border-b border-white/[0.05] px-0.5">
@@ -511,7 +581,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                     </div>
                                     <Input
                                         {...register("originalTitle")}
-                                        placeholder="Оригінальна назва"
+                                        placeholder="Ромадзі"
                                     />
                                     <Input
                                         {...register("engTitle")}
@@ -637,6 +707,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                                 <RelatedAnimePicker
                                     initialItems={anime?.relatedAnimes ?? []}
                                     currentAnimeId={anime?.id}
+                                    value={relatedAnimeId}
                                     onChange={(value) =>
                                         setValue("relatedAnimeId", value, {
                                             shouldDirty: true,
@@ -993,6 +1064,46 @@ function TabButton({
             />
         </button>
     );
+}
+
+function toImportFormPatch(
+    data: AnimeImportData,
+): Partial<AnimeFormValues> {
+    const patch: Partial<AnimeFormValues> = {};
+
+    if (data.title !== undefined) patch.title = data.title;
+    if (data.originalTitle !== undefined)
+        patch.originalTitle = data.originalTitle ?? "";
+    if (data.engTitle !== undefined) patch.engTitle = data.engTitle ?? "";
+    if (data.description !== undefined)
+        patch.description = data.description ?? "";
+    if (data.type !== undefined) patch.type = data.type;
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.rating !== undefined) patch.rating = data.rating ?? "";
+    if (data.poster !== undefined) patch.poster = data.poster;
+    if (data.additionalImages !== undefined)
+        patch.additionalImages = data.additionalImages;
+    if (data.genres !== undefined) patch.genres = data.genres;
+    if (data.producers !== undefined) patch.producers = data.producers;
+    if (data.relatedAnimeId !== undefined)
+        patch.relatedAnimeId = data.relatedAnimeId;
+    if (data.releaseDate !== undefined)
+        patch.releaseDate = data.releaseDate ?? "";
+    if (data.endDate !== undefined) patch.endDate = data.endDate ?? "";
+    if (data.episodesTotal !== undefined)
+        patch.episodesTotal = numberToInput(data.episodesTotal);
+    if (data.seasonNumber !== undefined)
+        patch.seasonNumber = numberToInput(data.seasonNumber);
+    if (data.partNumber !== undefined)
+        patch.partNumber = numberToInput(data.partNumber);
+    if (data.duration !== undefined)
+        patch.duration = numberToInput(data.duration);
+    if (data.country !== undefined) patch.country = data.country ?? "";
+    if (data.studio !== undefined) patch.studio = data.studio ?? "";
+    if (data.mal !== undefined) patch.mal = data.mal ?? "";
+    if (data.al !== undefined) patch.al = data.al ?? "";
+
+    return patch;
 }
 
 function toFormValues(anime: Anime | null): AnimeFormValues {
