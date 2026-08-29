@@ -67,20 +67,30 @@ export function EditorError({ error }: { error: unknown }) {
 export function EditorBody({
     children,
     sidebar,
+    unifiedScroll = false,
 }: {
     children: ReactNode;
     sidebar?: ReactNode;
+    unifiedScroll?: boolean;
 }) {
     return (
         <div
             className={cn(
                 "mt-3 grid gap-4 lg:min-h-0 lg:flex-1",
                 sidebar && "xl:grid-cols-[minmax(0,1fr)_320px]",
+                unifiedScroll && "lg:items-start lg:overflow-y-auto lg:pr-1",
             )}
         >
             {children}
             {sidebar && (
-                <aside className="min-h-0 xl:overflow-y-auto">{sidebar}</aside>
+                <aside
+                    className={cn(
+                        "min-h-0",
+                        !unifiedScroll && "xl:overflow-y-auto",
+                    )}
+                >
+                    {sidebar}
+                </aside>
             )}
         </div>
     );

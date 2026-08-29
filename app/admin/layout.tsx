@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     if (!hasAccess) notFound();
 
     return (
-        <div className="h-full overflow-hidden bg-[#070b0c] p-3 sm:p-5 lg:p-8 xl:p-10 2xl:p-12">
+        <div className="admin-shell h-full overflow-hidden bg-[#070b0c] p-3 sm:p-5 lg:p-8 xl:p-10 2xl:p-12">
             <div className="mx-auto flex h-full min-h-0 w-full max-w-[1540px] flex-col gap-3 lg:flex-row lg:gap-4">
                 <AdminSidebar />
                 <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">

@@ -36,3 +36,46 @@ html,
 body {
   @apply bg-(--bg-1) text-white;
 }
+
+/* Admin uses several independently scrollable panels. Keep their scrollbars
+   visible, compact and consistent with the dark UI instead of browser defaults. */
+.admin-shell * {
+  scrollbar-width: thin;
+  scrollbar-color: #34414b transparent;
+}
+
+.admin-shell *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.admin-shell *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-shell *::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #34414b;
+  background-clip: content-box;
+}
+
+.admin-shell *::-webkit-scrollbar-thumb:hover {
+  background: #4a5a66;
+  background-clip: content-box;
+}
+
+.admin-shell *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (max-width: 1023px) {
+  .admin-nav-scroll {
+    scrollbar-width: none;
+  }
+
+  .admin-nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}

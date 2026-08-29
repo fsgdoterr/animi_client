@@ -19,7 +19,7 @@ export default function AdminSidebar() {
             </Link>
 
             <nav
-                className="no-scrollbar flex min-w-0 gap-1 overflow-x-auto pb-0.5 lg:block lg:min-h-0 lg:flex-1 lg:space-y-4 lg:overflow-y-auto lg:pb-0"
+                className="admin-nav-scroll flex min-w-0 gap-1 overflow-x-auto pb-0.5 lg:block lg:min-h-0 lg:flex-1 lg:space-y-4 lg:overflow-y-auto lg:pb-0"
                 aria-label="Адмін-навігація"
             >
                 {adminSidebarRoutes.map((section) => (
