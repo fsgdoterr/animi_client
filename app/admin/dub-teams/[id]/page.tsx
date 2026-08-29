@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetDubTeamQuery } from "@/lib/store/animi/dub-team-endpoints";
 
+import { useGetDubTeamStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditDubTeamPage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditDubTeamPage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetDubTeamQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetDubTeamStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditDubTeamPage({
                 backHref: "/admin/dub-teams",
                 backLabel: "Повернутися до команд",
             }}
-            render={(entity) => <DubTeamEditor key={entity.id} team={entity} />}
+            render={(entity) => <DubTeamEditor key={entity.id} team={entity} stats={stats} />}
         />
     );
 }

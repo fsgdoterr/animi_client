@@ -8,7 +8,7 @@ import type {
 
 type GenreListParams = {
     search?: string;
-    sort?: "new" | "old" | "title";
+    sort?: "new" | "old" | "title" | "anime";
     page?: number;
     limit?: number;
 };
@@ -49,7 +49,7 @@ const animiGenreEndpoints = animiApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{ type: "Genre", id: "LIST" }],
+            invalidatesTags: [{ type: "Genre", id: "LIST" }, { type: "Stats" }],
         }),
         updateGenre: builder.mutation<
             Genre,
@@ -63,6 +63,7 @@ const animiGenreEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, { id }) => [
                 { type: "Genre", id },
                 { type: "Genre", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
         deleteGenre: builder.mutation<void, number>({
@@ -73,6 +74,7 @@ const animiGenreEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [
                 { type: "Genre", id },
                 { type: "Genre", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

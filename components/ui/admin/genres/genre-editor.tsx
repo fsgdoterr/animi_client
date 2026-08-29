@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import PosterPicker from "@/components/ui/admin/genres/poster-picker";
+import EntityStatsCard from "@/components/ui/admin/shared/entity-stats-card";
 import {
     EditorBody,
     EditorError,
@@ -20,13 +21,14 @@ import {
     useUpdateGenreMutation,
 } from "@/lib/store/animi/genre-endpoints";
 import type { Genre, GenrePayload } from "@/lib/types/entites/genre";
+import type { GenreStats } from "@/lib/types/admin-stats";
 
 type GenreFormValues = {
     title: string;
     poster: string | number | null;
 };
 
-export default function GenreEditor({ genre }: { genre: Genre | null }) {
+export default function GenreEditor({ genre, stats }: { genre: Genre | null; stats?: GenreStats }) {
     const router = useRouter();
     const [createGenre, createState] = useCreateGenreMutation();
     const [updateGenre, updateState] = useUpdateGenreMutation();
@@ -80,7 +82,7 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
             <EditorHeader
                 backHref="/admin/genres"
                 backLabel="Назад до жанрів"
-                title={genre ? "Редагування жанру" : "Створення жанру"}
+                title={genre ? "Жанр" : "Створення жанру"}
                 subtitle={genre ? `${genre.title} · #${genre.id}` : undefined}
                 isSaving={isSaving}
                 submitLabel={genre ? "Зберегти" : "Створити"}
@@ -89,11 +91,25 @@ export default function GenreEditor({ genre }: { genre: Genre | null }) {
             <EditorBody
                 sidebar={
                     genre ? (
-                        <SystemInfoCard
+                        <div className="grid gap-3">
+                            {stats && (
+                                <EntityStatsCard
+                                    metrics={[
+                                        { label: "Аніме", value: stats.anime, hint: `${stats.announced} анонсованих` },
+                                        { label: "Перегляди", value: stats.views },
+                                        { label: "Оцінки", value: stats.reviews },
+                                        { label: "Середня", value: stats.averageRating == null ? "—" : stats.averageRating.toFixed(1) },
+                                        { label: "Онґоінги", value: stats.ongoing },
+                                        { label: "Завершені", value: stats.completed },
+                                    ]}
+                                />
+                            )}
+                            <SystemInfoCard
                             id={genre.id}
                             createdAt={genre.createdAt}
                             updatedAt={genre.updatedAt}
-                        />
+                            />
+                        </div>
                     ) : undefined
                 }
             >

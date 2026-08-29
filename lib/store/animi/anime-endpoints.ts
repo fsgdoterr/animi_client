@@ -22,6 +22,7 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
                     status: params?.status || undefined,
                     type: params?.type || undefined,
                     sort: params?.sort || undefined,
+                    issue: params?.issue || undefined,
                 },
             }),
             transformResponse: (
@@ -46,7 +47,7 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{ type: "Anime", id: "LIST" }],
+            invalidatesTags: [{ type: "Anime", id: "LIST" }, { type: "Stats" }],
         }),
         updateAnime: builder.mutation<
             Anime,
@@ -60,6 +61,7 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, { id }) => [
                 { type: "Anime", id },
                 { type: "Anime", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
         deleteAnime: builder.mutation<void, number>({
@@ -70,6 +72,7 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [
                 { type: "Anime", id },
                 { type: "Anime", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

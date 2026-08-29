@@ -6,6 +6,7 @@ export interface Genre {
     slug: string;
     title: string;
     poster: Image | PrivateImage | null;
+    _count?: { animes: number };
     createdAt: string;
     updatedAt: string;
 }

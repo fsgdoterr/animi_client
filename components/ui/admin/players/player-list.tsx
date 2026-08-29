@@ -57,6 +57,7 @@ export default function PlayerList() {
             editLabel={(player) => `Редагувати ${player.title}`}
             deleteLabel={(player) => `Видалити ${player.title}`}
             onDelete={handleDelete}
+            description={(player) => `${player._count?.episodeVariants ?? 0} варіантів серій`}
         />
     );
 }

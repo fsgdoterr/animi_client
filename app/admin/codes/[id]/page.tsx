@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetCodeQuery } from "@/lib/store/animi/code-endpoints";
 
+import { useGetCodeStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditCodePage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditCodePage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetCodeQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetCodeStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditCodePage({
                 backHref: "/admin/codes",
                 backLabel: "Повернутися до кодів",
             }}
-            render={(entity) => <CodeEditor key={entity.id} code={entity} />}
+            render={(entity) => <CodeEditor key={entity.id} code={entity} stats={stats} />}
         />
     );
 }

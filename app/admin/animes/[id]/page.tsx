@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetAnimeQuery } from "@/lib/store/animi/anime-endpoints";
 
+import { useGetAnimeStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditAnimePage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditAnimePage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetAnimeQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetAnimeStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditAnimePage({
                 backHref: "/admin/animes",
                 backLabel: "Повернутися до аніме",
             }}
-            render={(entity) => <AnimeEditor key={entity.id} anime={entity} />}
+            render={(entity) => <AnimeEditor key={entity.id} anime={entity} stats={stats} />}
         />
     );
 }

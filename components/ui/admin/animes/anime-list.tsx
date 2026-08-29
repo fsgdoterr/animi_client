@@ -22,6 +22,7 @@ import { useGetGenresQuery } from "@/lib/store/animi/genre-endpoints";
 import {
     AnimeStatus,
     AnimeType,
+    type AnimeIssue,
     type AnimeListItem,
     type AnimeSortMode,
 } from "@/lib/types/entites/anime";
@@ -36,15 +37,34 @@ import {
     animeTypeLabel,
 } from "./anime-options";
 
-export default function AnimeList() {
+const animeIssueOptions: { value: "" | AnimeIssue; label: string }[] = [
+    { value: "", label: "Усі записи" },
+    { value: "missingPoster", label: "Без постера" },
+    { value: "missingDescription", label: "Без опису" },
+    { value: "withoutEpisodes", label: "Без серій" },
+    { value: "withoutActiveVariant", label: "Є серії без активного варіанта" },
+];
+
+export default function AnimeList({
+    initialSort = "new",
+    initialIssue,
+    initialStatus,
+}: {
+    initialSort?: AnimeSortMode;
+    initialIssue?: AnimeIssue;
+    initialStatus?: AnimeStatus;
+}) {
     const [search, setSearch] = useState("");
     const deferredSearch = useDeferredValue(search.trim());
-    const [sort, setSort] = useState<AnimeSortMode>("new");
+    const [sort, setSort] = useState<AnimeSortMode>(initialSort);
     const [page, setPage] = useState(1);
     const [filtersOpen, setFiltersOpen] = useState(true);
     const [genres, setGenres] = useState<string[]>([]);
-    const [statuses, setStatuses] = useState<AnimeStatus[]>([]);
+    const [statuses, setStatuses] = useState<AnimeStatus[]>(
+        initialStatus ? [initialStatus] : [],
+    );
     const [types, setTypes] = useState<AnimeType[]>([]);
+    const [issue, setIssue] = useState<"" | AnimeIssue>(initialIssue ?? "");
 
     const [deleteAnime, deleteState] = useDeleteAnimeMutation();
     const { data: genreData } = useGetGenresQuery({ page: 1, limit: 100 });
@@ -54,13 +74,14 @@ export default function AnimeList() {
         status: statuses.length ? statuses.join(",") : undefined,
         type: types.length ? types.join(",") : undefined,
         sort,
+        issue: issue || undefined,
         page,
         limit: ADMIN_LIST_PAGE_SIZE,
     });
 
     useEffect(() => {
         setPage(1);
-    }, [deferredSearch, genres, statuses, types, sort]);
+    }, [deferredSearch, genres, statuses, types, sort, issue]);
 
     useEffect(() => {
         if (data?.totalPages && page > data.totalPages) {
@@ -77,7 +98,7 @@ export default function AnimeList() {
         [genreData?.items],
     );
 
-    const activeFilterCount = genres.length + statuses.length + types.length;
+    const activeFilterCount = genres.length + statuses.length + types.length + (issue ? 1 : 0);
 
     function handleDelete(anime: AnimeListItem) {
         return runConfirmedMutation(
@@ -90,6 +111,7 @@ export default function AnimeList() {
         setGenres([]);
         setStatuses([]);
         setTypes([]);
+        setIssue("");
     }
 
     const showLoading = isLoading || (isFetching && data === undefined);
@@ -146,7 +168,7 @@ export default function AnimeList() {
 
             {filtersOpen && (
                 <section className="mt-2 shrink-0 rounded-xl border border-white/[0.025] bg-[#11171c] p-3 shadow-[0_12px_40px_rgba(0,0,0,0.1)]">
-                    <div className="grid gap-2 md:grid-cols-3">
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                         <MultiSelect
                             label="Жанри"
                             placeholder="Усі жанри"
@@ -170,6 +192,13 @@ export default function AnimeList() {
                             value={types}
                             options={animeTypeFilterOptions}
                             onChange={setTypes}
+                            className="w-full"
+                        />
+                        <Select
+                            label="Стан контенту"
+                            value={issue}
+                            options={animeIssueOptions}
+                            onChange={setIssue}
                             className="w-full"
                         />
                     </div>

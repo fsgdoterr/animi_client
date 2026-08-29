@@ -153,6 +153,11 @@ export interface AnimePayload {
 }
 
 export type AnimeSortMode = "new" | "old" | "title" | "release" | "views";
+export type AnimeIssue =
+    | "missingPoster"
+    | "missingDescription"
+    | "withoutEpisodes"
+    | "withoutActiveVariant";
 
 export interface AnimeListParams {
     search?: string;
@@ -160,6 +165,7 @@ export interface AnimeListParams {
     status?: string;
     type?: string;
     sort?: AnimeSortMode;
+    issue?: AnimeIssue;
     page?: number;
     limit?: number;
 }

@@ -57,6 +57,7 @@ export default function DubTeamList() {
             editLabel={(team) => `Редагувати ${team.title}`}
             deleteLabel={(team) => `Видалити ${team.title}`}
             onDelete={handleDelete}
+            description={(team) => `${team._count?.episodeVariants ?? 0} варіантів серій`}
         />
     );
 }

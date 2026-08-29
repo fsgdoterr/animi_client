@@ -8,7 +8,7 @@ import type {
 
 type DubTeamListParams = {
     search?: string;
-    sort?: "new" | "old" | "title";
+    sort?: "new" | "old" | "title" | "usage";
     page?: number;
     limit?: number;
 };
@@ -45,13 +45,14 @@ const animiDubTeamEndpoints = animiApi.injectEndpoints({
         }),
         createDubTeam: builder.mutation<DubTeam, DubTeamPayload>({
             query: (body) => ({ url: "/dubteam", method: "POST", body }),
-            invalidatesTags: [{ type: "DubTeam", id: "LIST" }],
+            invalidatesTags: [{ type: "DubTeam", id: "LIST" }, { type: "Stats" }],
         }),
         updateDubTeam: builder.mutation<DubTeam, { id: number; body: Partial<DubTeamPayload> }>({
             query: ({ id, body }) => ({ url: `/dubteam/${id}`, method: "PATCH", body }),
             invalidatesTags: (_result, _error, { id }) => [
                 { type: "DubTeam", id },
                 { type: "DubTeam", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
         deleteDubTeam: builder.mutation<void, number>({
@@ -59,6 +60,7 @@ const animiDubTeamEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [
                 { type: "DubTeam", id },
                 { type: "DubTeam", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

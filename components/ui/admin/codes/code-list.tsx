@@ -28,8 +28,8 @@ const sortOptions: SelectOption<AnimeCodeSortMode>[] = [
     { value: "views", label: "За переглядами" },
 ];
 
-export default function CodeList() {
-    const controls = useAdminListControls<AnimeCodeSortMode>("new");
+export default function CodeList({ initialSort = "new" }: { initialSort?: AnimeCodeSortMode }) {
+    const controls = useAdminListControls<AnimeCodeSortMode>(initialSort);
     const [deleteCode, deleteState] = useDeleteCodeMutation();
     const { data, isLoading, isFetching, error } = useGetCodesQuery({
         search: controls.deferredSearch || undefined,

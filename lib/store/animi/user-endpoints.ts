@@ -8,7 +8,7 @@ import type {
 
 type UserListParams = {
     search?: string;
-    sort?: "new" | "old" | "username";
+    sort?: "new" | "old" | "username" | "views";
     page?: number;
     limit?: number;
 };
@@ -45,7 +45,7 @@ const animiUserEndpoints = animiApi.injectEndpoints({
         }),
         createUser: builder.mutation<PrivateUser, UserPayload & { password: string }>({
             query: (body) => ({ url: "/user", method: "POST", body }),
-            invalidatesTags: [{ type: "User", id: "LIST" }],
+            invalidatesTags: [{ type: "User", id: "LIST" }, { type: "Stats" }],
         }),
         updateUser: builder.mutation<PrivateUser, { id: number; body: Partial<UserPayload> }>({
             query: ({ id, body }) => ({ url: `/user/${id}`, method: "PATCH", body }),
@@ -53,6 +53,7 @@ const animiUserEndpoints = animiApi.injectEndpoints({
                 { type: "User", id },
                 { type: "User", id: "LIST" },
                 { type: "Me" },
+                { type: "Stats" },
             ],
         }),
         deleteUser: builder.mutation<void, number>({
@@ -61,6 +62,7 @@ const animiUserEndpoints = animiApi.injectEndpoints({
                 { type: "User", id },
                 { type: "User", id: "LIST" },
                 { type: "Me" },
+                { type: "Stats" },
             ],
         }),
     }),

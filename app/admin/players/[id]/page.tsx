@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetPlayerQuery } from "@/lib/store/animi/player-endpoints";
 
+import { useGetPlayerStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditPlayerPage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditPlayerPage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetPlayerQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetPlayerStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditPlayerPage({
                 backHref: "/admin/players",
                 backLabel: "Повернутися до плеєрів",
             }}
-            render={(entity) => <PlayerEditor key={entity.id} player={entity} />}
+            render={(entity) => <PlayerEditor key={entity.id} player={entity} stats={stats} />}
         />
     );
 }

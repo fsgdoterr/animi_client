@@ -8,7 +8,7 @@ import type {
 
 type PlayerListParams = {
     search?: string;
-    sort?: "new" | "old" | "title";
+    sort?: "new" | "old" | "title" | "usage";
     page?: number;
     limit?: number;
 };
@@ -45,13 +45,14 @@ const animiPlayerEndpoints = animiApi.injectEndpoints({
         }),
         createPlayer: builder.mutation<Player, PlayerPayload>({
             query: (body) => ({ url: "/player", method: "POST", body }),
-            invalidatesTags: [{ type: "Player", id: "LIST" }],
+            invalidatesTags: [{ type: "Player", id: "LIST" }, { type: "Stats" }],
         }),
         updatePlayer: builder.mutation<Player, { id: number; body: Partial<PlayerPayload> }>({
             query: ({ id, body }) => ({ url: `/player/${id}`, method: "PATCH", body }),
             invalidatesTags: (_result, _error, { id }) => [
                 { type: "Player", id },
                 { type: "Player", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
         deletePlayer: builder.mutation<void, number>({
@@ -59,6 +60,7 @@ const animiPlayerEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [
                 { type: "Player", id },
                 { type: "Player", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

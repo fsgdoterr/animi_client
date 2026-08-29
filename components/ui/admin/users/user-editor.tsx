@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import AvatarPicker from "@/components/ui/admin/users/avatar-picker";
+import EntityStatsCard from "@/components/ui/admin/shared/entity-stats-card";
 import {
     EditorBody,
     EditorError,
@@ -26,6 +27,8 @@ import {
     useUpdateUserMutation,
 } from "@/lib/store/animi/user-endpoints";
 import type { PrivateUser, UserPayload } from "@/lib/types/entites/user";
+import type { UserStats } from "@/lib/types/admin-stats";
+import { formatDate } from "@/lib/utils/format-date";
 
 type UserFormValues = {
     username: string;
@@ -48,7 +51,7 @@ const permissionOptions: MultiSelectOption<Permissions>[] = [
     { value: Permissions.DEF, label: "DEF" },
 ];
 
-export default function UserEditor({ user }: { user: PrivateUser | null }) {
+export default function UserEditor({ user, stats }: { user: PrivateUser | null; stats?: UserStats }) {
     const router = useRouter();
     const [createUser, createState] = useCreateUserMutation();
     const [updateUser, updateState] = useUpdateUserMutation();
@@ -134,7 +137,7 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
                 backLabel="Назад до користувачів"
                 title={
                     user
-                        ? "Редагування користувача"
+                        ? "Користувач"
                         : "Створення користувача"
                 }
                 subtitle={
@@ -149,11 +152,33 @@ export default function UserEditor({ user }: { user: PrivateUser | null }) {
             <EditorBody
                 sidebar={
                     user ? (
-                        <SystemInfoCard
+                        <div className="grid gap-3">
+                            {stats && (
+                                <EntityStatsCard
+                                    title="Активність"
+                                    metrics={[
+                                        { label: "Перегляди", value: stats.views },
+                                        { label: "За 30 днів", value: stats.views30 },
+                                        { label: "Оцінки", value: stats.reviews, hint: stats.averageRating == null ? "Без оцінок" : `Середня ${stats.averageRating.toFixed(1)}` },
+                                        { label: "Підписки", value: stats.subscriptions },
+                                        { label: "Коментарі", value: stats.comments },
+                                        { label: "Плейлисти", value: stats.playlists },
+                                        { label: "Створено аніме", value: stats.createdAnime },
+                                        { label: "Активні сесії", value: stats.activeSessions },
+                                    ]}
+                                />
+                            )}
+                            {stats?.lastViewAt && (
+                                <div className="rounded-xl border border-white/[0.025] bg-[#11171c] px-4 py-3 text-[12px] text-white/34">
+                                    Останній перегляд: <span className="text-white/62">{formatDate(stats.lastViewAt)}</span>
+                                </div>
+                            )}
+                            <SystemInfoCard
                             id={user.id}
                             createdAt={user.createdAt}
                             updatedAt={user.updatedAt}
-                        />
+                            />
+                        </div>
                     ) : undefined
                 }
             >

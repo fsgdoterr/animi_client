@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetGenreQuery } from "@/lib/store/animi/genre-endpoints";
 
+import { useGetGenreStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditGenrePage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditGenrePage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetGenreQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetGenreStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditGenrePage({
                 backHref: "/admin/genres",
                 backLabel: "Повернутися до жанрів",
             }}
-            render={(entity) => <GenreEditor key={entity.id} genre={entity} />}
+            render={(entity) => <GenreEditor key={entity.id} genre={entity} stats={stats} />}
         />
     );
 }

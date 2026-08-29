@@ -20,7 +20,7 @@ import type { PrivateUser } from "@/lib/types/entites/user";
 import { formatDate } from "@/lib/utils/format-date";
 import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
-type SortMode = "new" | "old" | "username";
+type SortMode = "new" | "old" | "username" | "views";
 
 const roleLabels: Record<UserRole, string> = {
     [UserRole.USER]: "Користувач",
@@ -33,6 +33,7 @@ const sortOptions: SelectOption<SortMode>[] = [
     { value: "new", label: "Нові" },
     { value: "old", label: "Старі" },
     { value: "username", label: "А-Я" },
+    { value: "views", label: "За переглядами" },
 ];
 
 export default function UserList() {
@@ -93,18 +94,19 @@ type UserContentProps = {
 function UserTable({ users, onDelete, deleteDisabled }: UserContentProps) {
     return (
         <div className="min-w-[1020px]">
-            <div className="sticky top-0 z-10 grid grid-cols-[70px_minmax(280px,1.2fr)_minmax(220px,1fr)_150px_170px_110px] items-center rounded-md bg-[#9a9d9f] px-4 py-2.5 text-[14px] text-white/90 shadow-sm">
+            <div className="sticky top-0 z-10 grid grid-cols-[70px_minmax(260px,1.15fr)_minmax(200px,1fr)_150px_165px_170px_110px] items-center rounded-md bg-[#9a9d9f] px-4 py-2.5 text-[14px] text-white/90 shadow-sm">
                 <span>ID</span>
                 <span>Користувач</span>
                 <span>Email</span>
                 <span>Роль</span>
+                <span>Активність</span>
                 <span>Створено</span>
                 <span className="text-right">Дії</span>
             </div>
             {users.map((user) => (
                 <div
                     key={user.id}
-                    className="grid grid-cols-[70px_minmax(280px,1.2fr)_minmax(220px,1fr)_150px_170px_110px] items-center border-b border-white/[0.10] px-4 py-3 text-[14px] text-white/75 last:border-b-0 hover:bg-white/[0.018]"
+                    className="grid grid-cols-[70px_minmax(260px,1.15fr)_minmax(200px,1fr)_150px_165px_170px_110px] items-center border-b border-white/[0.10] px-4 py-3 text-[14px] text-white/75 last:border-b-0 hover:bg-white/[0.018]"
                 >
                     <span className="text-white/50">#{user.id}</span>
                     <UserIdentity user={user} />
@@ -112,6 +114,7 @@ function UserTable({ users, onDelete, deleteDisabled }: UserContentProps) {
                         {user.email}
                     </span>
                     <span className="text-white/58">{roleLabels[user.role]}</span>
+                    <span className="text-[12px] text-white/45">{user._count?.views ?? 0} пер. · {user._count?.reviews ?? 0} оц.</span>
                     <span className="text-white/52">
                         {formatDate(user.createdAt)}
                     </span>
@@ -142,6 +145,9 @@ function UserCards({ users, onDelete, deleteDisabled }: UserContentProps) {
                     </p>
                     <p className="mt-1 text-[12px] text-white/35">
                         {roleLabels[user.role]} · #{user.id}
+                    </p>
+                    <p className="mt-1 text-[12px] text-white/30">
+                        {user._count?.views ?? 0} переглядів · {user._count?.reviews ?? 0} оцінок · {user._count?.comments ?? 0} коментарів
                     </p>
                 </div>
             </div>

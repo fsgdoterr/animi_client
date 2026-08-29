@@ -42,7 +42,7 @@ const animiCodeEndpoints = animiApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{ type: "Code", id: "LIST" }],
+            invalidatesTags: [{ type: "Code", id: "LIST" }, { type: "Stats" }],
         }),
         updateCode: builder.mutation<
             AnimeCode,
@@ -56,6 +56,7 @@ const animiCodeEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, { id }) => [
                 { type: "Code", id },
                 { type: "Code", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
         deleteCode: builder.mutation<void, number>({
@@ -66,6 +67,7 @@ const animiCodeEndpoints = animiApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [
                 { type: "Code", id },
                 { type: "Code", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

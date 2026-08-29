@@ -6,6 +6,8 @@ import EntityEditPage, {
 } from "@/components/ui/admin/shared/entity-edit-page";
 import { useGetUserQuery } from "@/lib/store/animi/user-endpoints";
 
+import { useGetUserStatsQuery } from "@/lib/store/animi/admin-stats-endpoints";
+
 export default function EditUserPage({
     params,
 }: {
@@ -13,6 +15,9 @@ export default function EditUserPage({
 }) {
     const entityId = useEntityId(params);
     const { data, isLoading, error } = useGetUserQuery(entityId ?? 0, {
+        skip: entityId === null,
+    });
+    const { data: stats } = useGetUserStatsQuery(entityId ?? 0, {
         skip: entityId === null,
     });
 
@@ -30,7 +35,7 @@ export default function EditUserPage({
                 backHref: "/admin/users",
                 backLabel: "Повернутися до користувачів",
             }}
-            render={(entity) => <UserEditor key={entity.id} user={entity} />}
+            render={(entity) => <UserEditor key={entity.id} user={entity} stats={stats} />}
         />
     );
 }

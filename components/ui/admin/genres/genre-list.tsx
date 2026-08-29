@@ -17,12 +17,13 @@ import type { Genre } from "@/lib/types/entites/genre";
 import { formatDate } from "@/lib/utils/format-date";
 import { runConfirmedMutation } from "@/lib/utils/confirm-mutation";
 
-type SortMode = "new" | "old" | "title";
+type SortMode = "new" | "old" | "title" | "anime";
 
 const sortOptions: SelectOption<SortMode>[] = [
     { value: "new", label: "Нові" },
     { value: "old", label: "Старі" },
     { value: "title", label: "А-Я" },
+    { value: "anime", label: "За кількістю аніме" },
 ];
 
 export default function GenreList() {
@@ -83,19 +84,21 @@ type GenreContentProps = {
 function GenreTable({ genres, onDelete, deleteDisabled }: GenreContentProps) {
     return (
         <div className="min-w-[800px]">
-            <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(290px,1fr)_175px_110px] items-center rounded-md bg-[#9a9d9f] px-4 py-2.5 text-[14px] text-white/90 shadow-sm">
+            <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(290px,1fr)_90px_175px_110px] items-center rounded-md bg-[#9a9d9f] px-4 py-2.5 text-[14px] text-white/90 shadow-sm">
                 <span>ID</span>
                 <span>Назва</span>
+                <span>Аніме</span>
                 <span>Створено</span>
                 <span className="text-right">Дії</span>
             </div>
             {genres.map((genre) => (
                 <div
                     key={genre.id}
-                    className="grid grid-cols-[80px_minmax(290px,1fr)_175px_110px] items-center border-b border-white/[0.10] px-4 py-3 text-[14px] text-white/75 last:border-b-0 hover:bg-white/[0.018]"
+                    className="grid grid-cols-[80px_minmax(290px,1fr)_90px_175px_110px] items-center border-b border-white/[0.10] px-4 py-3 text-[14px] text-white/75 last:border-b-0 hover:bg-white/[0.018]"
                 >
                     <span className="text-white/50">#{genre.id}</span>
                     <GenreIdentity genre={genre} />
+                    <span className="text-white/58">{genre._count?.animes ?? 0}</span>
                     <span className="text-white/52">
                         {formatDate(genre.createdAt)}
                     </span>
@@ -125,7 +128,7 @@ function GenreCards({ genres, onDelete, deleteDisabled }: GenreContentProps) {
             </div>
             <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/[0.05] pt-3">
                 <p className="min-w-0 truncate text-[13px] text-white/38">
-                    #{genre.id} · {formatDate(genre.createdAt)}
+                    #{genre.id} · {genre._count?.animes ?? 0} аніме · {formatDate(genre.createdAt)}
                 </p>
                 <GenreActions genre={genre} onDelete={onDelete} deleteDisabled={deleteDisabled} />
             </div>

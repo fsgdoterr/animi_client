@@ -48,11 +48,12 @@ import {
     EpisodeSourceType,
     type Anime,
 } from "@/lib/types/entites/anime";
+import type { AnimeStats } from "@/lib/types/admin-stats";
 import cn from "@/lib/utils/cn";
 
 type EditorTab = "main" | "episodes";
 
-export default function AnimeEditor({ anime }: { anime: Anime | null }) {
+export default function AnimeEditor({ anime, stats }: { anime: Anime | null; stats?: AnimeStats }) {
     const router = useRouter();
     const episodeKeyCounter = useRef(0);
     const variantKeyCounter = useRef(0);
@@ -457,7 +458,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
             <EditorHeader
                 backHref="/admin/animes"
                 backLabel="Назад до аніме"
-                title={anime ? "Редагування аніме" : "Створення аніме"}
+                title={anime ? "Аніме" : "Створення аніме"}
                 subtitle={anime ? `${anime.title} · #${anime.id}` : undefined}
                 isSaving={isSaving}
                 submitLabel={anime ? "Зберегти" : "Створити"}
@@ -513,6 +514,7 @@ export default function AnimeEditor({ anime }: { anime: Anime | null }) {
                     form={form}
                     genreOptions={genreOptions}
                     producerOptions={producerOptions}
+                    stats={stats}
                 />
             ) : (
                 <div className="mt-3 grid min-h-[520px] flex-1 gap-4 lg:min-h-0 lg:grid-cols-[300px_minmax(0,1fr)]">

@@ -15,6 +15,7 @@ export interface PrivateUser extends User {
     email: string;
     createdAt: string;
     updatedAt?: string;
+    _count?: { views: number; reviews: number; comments: number; subscriptions: number };
 }
 
 export interface UserPayload {

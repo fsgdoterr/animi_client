@@ -2,6 +2,7 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
+import EntityStatsCard from "@/components/ui/admin/shared/entity-stats-card";
 import AdditionalImagesPicker from "@/components/ui/admin/animes/additional-images-picker";
 import {
     EditorSection,
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/inputs/input";
 import { AnimeType, type Anime } from "@/lib/types/entites/anime";
 import type { Genre } from "@/lib/types/entites/genre";
 import type { Producer } from "@/lib/types/entites/producer";
+import type { AnimeStats } from "@/lib/types/admin-stats";
 import cn from "@/lib/utils/cn";
 import {
     animeRatingOptions,
@@ -44,11 +46,13 @@ export default function AnimeMainTab({
     form,
     genreOptions,
     producerOptions,
+    stats,
 }: {
     anime: Anime | null;
     form: UseFormReturn<AnimeFormValues>;
     genreOptions: Genre[];
     producerOptions: Producer[];
+    stats?: AnimeStats;
 }) {
     const {
         register,
@@ -108,6 +112,21 @@ export default function AnimeMainTab({
             unifiedScroll
             sidebar={
                 <div className="grid gap-4">
+                    {anime && stats && (
+                        <EntityStatsCard
+                            metrics={[
+                                { label: "Перегляди", value: stats.views, hint: `${stats.views7} за 7 днів` },
+                                { label: "30 днів", value: stats.views30 },
+                                { label: "Оцінки", value: stats.reviews, hint: stats.averageRating == null ? "Без оцінок" : `Середня ${stats.averageRating.toFixed(1)}` },
+                                { label: "Підписки", value: stats.subscriptions },
+                                { label: "Коментарі", value: stats.comments },
+                                { label: "У плейлистах", value: stats.playlistAdds },
+                                { label: "Серії", value: stats.episodes, hint: `${stats.variants} варіантів · ${stats.activeVariants} активних` },
+                                { label: "Коди", value: stats.codes },
+                            ]}
+                        />
+                    )}
+
                     <EditorSideCard
                         title="Статус"
                         reset={fieldReset("status", "статус")}

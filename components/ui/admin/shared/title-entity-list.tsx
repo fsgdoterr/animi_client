@@ -3,15 +3,17 @@
 import AdminListPage from "@/components/ui/admin/shared/admin-list-page";
 import EntityActions from "@/components/ui/admin/shared/entity-actions";
 import type { SelectOption } from "@/components/ui/dropdowns/select";
+import type { ReactNode } from "react";
 import type { PaginatedResult } from "@/lib/types/pagination";
 import { formatDate } from "@/lib/utils/format-date";
 
-export type TitleSortMode = "new" | "old" | "title";
+export type TitleSortMode = "new" | "old" | "title" | "usage";
 
 export const titleSortOptions: SelectOption<TitleSortMode>[] = [
     { value: "new", label: "Нові" },
     { value: "old", label: "Старі" },
     { value: "title", label: "А-Я" },
+    { value: "usage", label: "За використанням" },
 ];
 
 type TitleEntity = {
@@ -42,6 +44,7 @@ export default function TitleEntityList<T extends TitleEntity>({
     editLabel,
     deleteLabel,
     onDelete,
+    description,
 }: {
     title: string;
     createHref: string;
@@ -64,6 +67,7 @@ export default function TitleEntityList<T extends TitleEntity>({
     editLabel: (entity: T) => string;
     deleteLabel: (entity: T) => string;
     onDelete: (entity: T) => void;
+    description?: (entity: T) => ReactNode;
 }) {
     const items = data?.items ?? [];
 
@@ -110,9 +114,10 @@ export default function TitleEntityList<T extends TitleEntity>({
                             className="grid grid-cols-[80px_minmax(260px,1fr)_175px_110px] items-center border-b border-white/[0.10] px-4 py-3 text-[14px] text-white/75 last:border-b-0 hover:bg-white/[0.018]"
                         >
                             <span className="text-white/50">#{entity.id}</span>
-                            <span className="truncate pr-4 text-[16px] text-white/90">
-                                {entity.title}
-                            </span>
+                            <div className="min-w-0 pr-4">
+                                <p className="truncate text-[16px] text-white/90">{entity.title}</p>
+                                {description && <div className="mt-0.5 truncate text-[12px] text-white/30">{description(entity)}</div>}
+                            </div>
                             <span className="text-white/52">
                                 {formatDate(entity.createdAt)}
                             </span>
@@ -134,6 +139,7 @@ export default function TitleEntityList<T extends TitleEntity>({
                             <p className="mt-1 text-[13px] text-white/38">
                                 #{entity.id} · {formatDate(entity.createdAt)}
                             </p>
+                            {description && <div className="mt-1 text-[12px] text-white/30">{description(entity)}</div>}
                         </div>
                         {actions(entity)}
                     </div>

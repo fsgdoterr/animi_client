@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import AnimeCodePicker from "./anime-code-picker";
+import EntityStatsCard from "@/components/ui/admin/shared/entity-stats-card";
 import {
     EditorBody,
     EditorError,
@@ -20,13 +20,15 @@ import {
     useUpdateCodeMutation,
 } from "@/lib/store/animi/code-endpoints";
 import type { AnimeCode, AnimeCodePayload } from "@/lib/types/entites/code";
+import type { CodeStats } from "@/lib/types/admin-stats";
+import { formatDate } from "@/lib/utils/format-date";
 
 interface CodeFormValues {
     code: string;
     animeId: number | null;
 }
 
-export default function CodeEditor({ code }: { code: AnimeCode | null }) {
+export default function CodeEditor({ code, stats }: { code: AnimeCode | null; stats?: CodeStats }) {
     const router = useRouter();
     const [createCode, createState] = useCreateCodeMutation();
     const [updateCode, updateState] = useUpdateCodeMutation();
@@ -93,7 +95,7 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
             <EditorHeader
                 backHref="/admin/codes"
                 backLabel="Назад до кодів"
-                title={code ? "Редагування коду" : "Створення коду"}
+                title={code ? "Код" : "Створення коду"}
                 subtitle={code ? `${code.code} · ${code.anime.title} · #${code.id}` : undefined}
                 isSaving={isSaving}
                 submitLabel={code ? "Зберегти" : "Створити"}
@@ -104,7 +106,22 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
                 sidebar={
                     code ? (
                         <div className="grid gap-3">
-                            <ViewsCard views={code._count.views} />
+                            {stats && (
+                                <EntityStatsCard
+                                    title="Трафік коду"
+                                    metrics={[
+                                        { label: "Усього", value: stats.views },
+                                        { label: "7 днів", value: stats.views7 },
+                                        { label: "30 днів", value: stats.views30 },
+                                        { label: "Авторизовані", value: stats.authorizedViews },
+                                    ]}
+                                />
+                            )}
+                            {stats?.lastViewedAt && (
+                                <div className="rounded-xl border border-white/[0.025] bg-[#11171c] px-4 py-3 text-[12px] text-white/34">
+                                    Останній перегляд: <span className="text-white/62">{formatDate(stats.lastViewedAt)}</span>
+                                </div>
+                            )}
                             <SystemInfoCard
                                 id={code.id}
                                 createdAt={code.createdAt}
@@ -183,23 +200,5 @@ export default function CodeEditor({ code }: { code: AnimeCode | null }) {
                 </EditorPanel>
             </EditorBody>
         </form>
-    );
-}
-
-function ViewsCard({ views }: { views: number }) {
-    return (
-        <section className="rounded-xl border border-white/[0.025] bg-[#11171c] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.12)]">
-            <div className="flex items-center justify-between gap-3">
-                <div>
-                    <p className="text-[13px] text-white/35">Перегляди за кодом</p>
-                    <p className="mt-1 text-[26px] leading-none text-white/88">
-                        {views.toLocaleString("uk-UA")}
-                    </p>
-                </div>
-                <div className="flex size-10 items-center justify-center rounded-lg bg-white/[0.035] text-white/35">
-                    <Eye size={19} />
-                </div>
-            </div>
-        </section>
     );
 }

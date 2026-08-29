@@ -50,6 +50,7 @@ const episodeEndpoints = animiApi.injectEndpoints({
                 { type: "Episode", id: `ANIME-${animeId}` },
                 { type: "Anime", id: animeId },
                 { type: "Anime", id: "LIST" },
+                { type: "Stats" },
             ],
         }),
     }),

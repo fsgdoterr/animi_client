@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -35,6 +36,7 @@ export default function TitleEntityEditor<T extends TitleEntity>({
     error,
     onCreate,
     onUpdate,
+    sidebar,
 }: {
     entity: T | null;
     returnHref: string;
@@ -47,6 +49,7 @@ export default function TitleEntityEditor<T extends TitleEntity>({
     error: unknown;
     onCreate: (title: string) => Promise<unknown>;
     onUpdate: (id: number, title: string) => Promise<unknown>;
+    sidebar?: ReactNode;
 }) {
     const router = useRouter();
     const {
@@ -90,11 +93,14 @@ export default function TitleEntityEditor<T extends TitleEntity>({
             <EditorBody
                 sidebar={
                     entity ? (
-                        <SystemInfoCard
+                        <div className="grid gap-3">
+                            {sidebar}
+                            <SystemInfoCard
                             id={entity.id}
                             createdAt={entity.createdAt}
                             updatedAt={entity.updatedAt}
-                        />
+                            />
+                        </div>
                     ) : undefined
                 }
             >
