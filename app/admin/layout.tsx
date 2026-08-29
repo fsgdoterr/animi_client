@@ -18,10 +18,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     if (!hasAccess) notFound();
 
     return (
-        <div className="min-h-full bg-[#070b0c] p-5 sm:p-7 lg:p-10 xl:p-14">
-            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-[1540px] flex-col gap-4 lg:min-h-[calc(100dvh-5rem)] lg:flex-row">
+        <div className="h-full overflow-hidden bg-[#070b0c] p-3 sm:p-5 lg:p-8 xl:p-10 2xl:p-12">
+            <div className="mx-auto flex h-full min-h-0 w-full max-w-[1540px] flex-col gap-3 lg:flex-row lg:gap-4">
                 <AdminSidebar />
-                <main className="flex min-w-0 flex-1">{children}</main>
+                <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+                    {children}
+                </main>
             </div>
         </div>
     );

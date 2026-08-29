@@ -1,5 +1,7 @@
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
+
+import cn from "@/lib/utils/cn";
 
 interface Props {
     active?: boolean;
@@ -9,33 +11,24 @@ interface Props {
 }
 
 export default function AdminSidebarButton({
-    active,
+    active = false,
     label,
     href,
-    icon,
+    icon: Icon,
 }: Props) {
-    const Icon = icon;
-    if (active) {
-        return (
-            <Link
-                href="/admin"
-                aria-current="page"
-                className="flex h-10 items-center gap-3 rounded-md bg-white/55 px-3 text-[15px] text-white shadow-sm transition hover:bg-white/60"
-            >
-                <Icon size={18} strokeWidth={1.7} />
-                <span>{label}</span>
-            </Link>
-        );
-    }
-
     return (
         <Link
             href={href}
-            aria-disabled="true"
-            className="flex h-10 items-center gap-3 rounded-md px-3 text-[15px] text-white/78 transition hover:bg-white/[0.045] hover:text-white"
+            aria-current={active ? "page" : undefined}
+            className={cn(
+                "flex h-10 shrink-0 items-center gap-2.5 rounded-md px-3 text-[15px] transition lg:w-full lg:gap-3",
+                active
+                    ? "bg-white/55 text-white shadow-sm hover:bg-white/60"
+                    : "text-white/78 hover:bg-white/[0.045] hover:text-white",
+            )}
         >
             <Icon size={18} strokeWidth={1.7} />
-            <span>{label}</span>
+            <span className="whitespace-nowrap">{label}</span>
         </Link>
     );
 }

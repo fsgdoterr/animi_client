@@ -7,8 +7,6 @@ export const animiApi = createApi({
         baseUrl: API_URL,
         credentials: "include",
     }),
-    tagTypes: [
-        "Me"
-    ],
+    tagTypes: ["Me", "Genre", "Player", "DubTeam", "User"],
     endpoints: () => ({}),
 });

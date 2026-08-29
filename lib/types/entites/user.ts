@@ -1,3 +1,4 @@
+import type { PaginatedResult } from "@/lib/types/pagination";
 import { Permissions, UserRole } from "@/lib/constants/permissions";
 import { Image, PrivateImage } from "@/lib/types/entites/image-type";
 
@@ -15,3 +16,15 @@ export interface PrivateUser extends User {
     createdAt: string;
     updatedAt?: string;
 }
+
+export interface UserPayload {
+    username: string;
+    email: string;
+    password?: string;
+    displayName?: string | null;
+    avatar?: number | null;
+    role?: UserRole;
+    permissions?: Permissions[];
+}
+
+export type UserListResult = PaginatedResult<PrivateUser>;
