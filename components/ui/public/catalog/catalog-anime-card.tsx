@@ -5,6 +5,7 @@ import Link from "next/link";
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
 import type { PublicAnimeCard } from "@/lib/types/public";
 import {
+    animeInstallmentLabel,
     animeRatingLabels,
     animeTypeLabels,
     compactDescription,
@@ -76,7 +77,14 @@ export default function CatalogAnimeCard({ anime }: { anime: PublicAnimeCard }) 
                         </span>
                     )}
                     <AnimeBadges anime={anime} compact countsOnly />
-                    <span className="text-[11px] text-white/38">{animeTypeLabels[anime.type]}</span>
+                    <span className="text-[11px] text-white/38">
+                        {[
+                            animeTypeLabels[anime.type],
+                            animeInstallmentLabel(anime.seasonNumber, anime.partNumber),
+                        ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                    </span>
                 </div>
 
                 <div className="mt-2 hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/34 sm:flex">

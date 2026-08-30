@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Braces, Plus } from "lucide-react";
+import { AlertTriangle, Braces, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -53,6 +53,36 @@ import cn from "@/lib/utils/cn";
 
 type EditorTab = "main" | "episodes";
 
+type ImageFetchFailure = {
+    url: string;
+    message: string;
+    kind?: "poster" | "additional";
+};
+
+function getImageFetchFailure(error: unknown): ImageFetchFailure | null {
+    if (!error || typeof error !== "object" || !("data" in error)) return null;
+
+    const data = (error as { data?: unknown }).data;
+    if (!data || typeof data !== "object") return null;
+
+    const payload = data as {
+        code?: unknown;
+        imageUrl?: unknown;
+        message?: unknown;
+    };
+    if (payload.code !== "IMAGE_FETCH_FAILED" || typeof payload.imageUrl !== "string") {
+        return null;
+    }
+
+    return {
+        url: payload.imageUrl,
+        message:
+            typeof payload.message === "string"
+                ? payload.message
+                : "Не вдалося отримати зображення за вказаним URL.",
+    };
+}
+
 export default function AnimeEditor({ anime, stats }: { anime: Anime | null; stats?: AnimeStats }) {
     const router = useRouter();
     const episodeKeyCounter = useRef(0);
@@ -65,6 +95,8 @@ export default function AnimeEditor({ anime, stats }: { anime: Anime | null; sta
     const [episodesDirty, setEpisodesDirty] = useState(false);
     const [episodesInitialized, setEpisodesInitialized] = useState(!anime);
     const [localError, setLocalError] = useState<string | null>(null);
+    const [imageFetchFailure, setImageFetchFailure] =
+        useState<ImageFetchFailure | null>(null);
     const [jsonImportOpen, setJsonImportOpen] = useState(false);
     const [persistedAnimeId, setPersistedAnimeId] = useState<number | null>(
         anime?.id ?? null,
@@ -90,6 +122,7 @@ export default function AnimeEditor({ anime, stats }: { anime: Anime | null; sta
         defaultValues: initialValues,
     });
     const {
+        getValues,
         handleSubmit,
         setValue,
         formState: { dirtyFields },
@@ -171,50 +204,106 @@ export default function AnimeEditor({ anime, stats }: { anime: Anime | null; sta
     const mutationError =
         createState.error ?? updateState.error ?? replaceEpisodesState.error;
 
+    async function saveAnime(values: AnimeFormValues) {
+        setLocalError(null);
+        setImageFetchFailure(null);
+        const animePayload = buildAnimePayload(values);
+        const episodePayload = buildEpisodePayload(episodes);
+
+        if (typeof episodePayload === "string") {
+            setLocalError(episodePayload);
+            setActiveTab("episodes");
+            return;
+        }
+
+        try {
+            let animeId = persistedAnimeId;
+
+            if (animeId) {
+                const body = anime
+                    ? buildUpdatePayload(animePayload, dirtyFields)
+                    : animePayload;
+                if (Object.keys(body).length > 0) {
+                    await updateAnime({ id: animeId, body }).unwrap();
+                }
+            } else {
+                const created = await createAnime(animePayload).unwrap();
+                animeId = created.id;
+                setPersistedAnimeId(created.id);
+            }
+
+            if (animeId && (episodesDirty || (!anime && episodes.length > 0))) {
+                await replaceEpisodes({
+                    animeId,
+                    episodes: episodePayload,
+                }).unwrap();
+                setEpisodesDirty(false);
+            }
+
+            router.push("/admin/animes");
+        } catch (error) {
+            const imageFailure = getImageFetchFailure(error);
+            if (imageFailure) {
+                setImageFetchFailure({
+                    ...imageFailure,
+                    kind:
+                        animePayload.poster === imageFailure.url
+                            ? "poster"
+                            : "additional",
+                });
+            }
+            // Other mutation errors are rendered below the header. If the anime
+            // was already created, persistedAnimeId prevents a duplicate on retry.
+        }
+    }
+
     const submit = handleSubmit(
         async (values) => {
-            setLocalError(null);
-            const animePayload = buildAnimePayload(values);
-            const episodePayload = buildEpisodePayload(episodes);
-
-            if (typeof episodePayload === "string") {
-                setLocalError(episodePayload);
-                setActiveTab("episodes");
-                return;
-            }
-
-            try {
-                let animeId = persistedAnimeId;
-
-                if (animeId) {
-                    const body = anime
-                        ? buildUpdatePayload(animePayload, dirtyFields)
-                        : animePayload;
-                    if (Object.keys(body).length > 0) {
-                        await updateAnime({ id: animeId, body }).unwrap();
-                    }
-                } else {
-                    const created = await createAnime(animePayload).unwrap();
-                    animeId = created.id;
-                    setPersistedAnimeId(created.id);
-                }
-
-                if (animeId && (episodesDirty || (!anime && episodes.length > 0))) {
-                    await replaceEpisodes({
-                        animeId,
-                        episodes: episodePayload,
-                    }).unwrap();
-                    setEpisodesDirty(false);
-                }
-
-                router.push("/admin/animes");
-            } catch {
-                // Mutation errors are rendered below the header. If the anime was
-                // already created, persistedAnimeId prevents a duplicate on retry.
-            }
+            await saveAnime(values);
         },
         () => setActiveTab("main"),
     );
+
+    async function saveWithoutFailedImage() {
+        if (!imageFetchFailure) return;
+
+        const values = getValues();
+        let removed = false;
+
+        if (values.poster === imageFetchFailure.url) {
+            values.poster = null;
+            setValue("poster", null, { shouldDirty: true });
+            removed = true;
+        }
+
+        const additionalImages = values.additionalImages.filter(
+            (image) => image !== imageFetchFailure.url,
+        );
+        if (additionalImages.length !== values.additionalImages.length) {
+            values.additionalImages = additionalImages;
+            setValue("additionalImages", additionalImages, { shouldDirty: true });
+            removed = true;
+        }
+
+        setImageFetchFailure(null);
+        createState.reset();
+        updateState.reset();
+
+        if (!removed) {
+            setLocalError(
+                "Проблемне зображення вже прибране з форми. Спробуйте зберегти ще раз.",
+            );
+            return;
+        }
+
+        await saveAnime(values);
+    }
+
+    function keepFailedImage() {
+        setImageFetchFailure(null);
+        createState.reset();
+        updateState.reset();
+    }
 
 
     function markEpisodes(nextEpisodes: EpisodeForm[]) {
@@ -501,7 +590,54 @@ export default function AnimeEditor({ anime, stats }: { anime: Anime | null; sta
                 </EditorTabButton>
             </div>
 
-            <EditorError error={mutationError} />
+            <EditorError error={imageFetchFailure ? null : mutationError} />
+            {imageFetchFailure && (
+                <div className="mt-3 shrink-0 rounded-xl border border-amber-300/15 bg-amber-300/[0.055] px-4 py-3.5 text-[14px] text-white/78">
+                    <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-300/[0.08] text-amber-200/80">
+                            <AlertTriangle size={17} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="font-medium text-white/88">
+                                {imageFetchFailure.kind === "poster"
+                                    ? "Не вдалося завантажити постер"
+                                    : "Не вдалося завантажити додаткове зображення"}
+                            </p>
+                            <p className="mt-1 leading-5 text-white/52">
+                                {imageFetchFailure.message} Можна зберегти аніме без
+                                цього зображення — воно буде прибране з форми, а
+                                збереження автоматично повториться.
+                            </p>
+                            <p
+                                className="mt-2 truncate rounded-md bg-black/15 px-2.5 py-1.5 font-mono text-[11px] text-white/35"
+                                title={imageFetchFailure.url}
+                            >
+                                {imageFetchFailure.url}
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <Button
+                                    type="button"
+                                    color="green"
+                                    onClick={() => void saveWithoutFailedImage()}
+                                    disabled={isSaving}
+                                    className="h-9"
+                                >
+                                    Так, зберегти без нього
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={keepFailedImage}
+                                    disabled={isSaving}
+                                    className="h-9"
+                                >
+                                    Ні
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             {localError && (
                 <div className="mt-3 shrink-0 rounded-lg border border-red-400/15 bg-red-500/[0.07] px-4 py-3 text-[14px] text-red-200/90">
                     {localError}

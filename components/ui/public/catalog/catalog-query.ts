@@ -23,7 +23,7 @@ export interface CatalogQueryState {
     filters: CatalogFilters;
 }
 
-const sortValues: PublicAnimeSort[] = ["views", "new", "release", "title", "old"];
+const sortValues: PublicAnimeSort[] = ["popular", "new", "release", "title", "old"];
 const viewModes: CatalogViewMode[] = ["list", "grid"];
 
 function parseEnumValues<T extends string>(
@@ -102,7 +102,7 @@ export function parseCatalogQuery(queryString: string): CatalogQueryState {
         preset,
         page: parsePositiveInt(params.get("page"), 1),
         search: params.get("q")?.trim() ?? "",
-        sort: rawSort && sortValues.includes(rawSort) ? rawSort : "views",
+        sort: rawSort && sortValues.includes(rawSort) ? rawSort : "popular",
         viewMode: rawViewMode && viewModes.includes(rawViewMode) ? rawViewMode : "list",
         filters,
     };
@@ -133,7 +133,7 @@ export function buildCatalogQuery({
 
     if (preset) params.set("preset", preset);
     if (search) params.set("q", search);
-    if (sort !== "views") params.set("sort", sort);
+    if (sort !== "popular") params.set("sort", sort);
     if (viewMode !== "list") params.set("view", viewMode);
     if (page > 1) params.set("page", String(page));
 

@@ -3,12 +3,14 @@ import { toPaginatedResult } from "@/lib/store/utils/paginated-response";
 import type { PaginatedResult } from "@/lib/types/pagination";
 import type {
     PublicAnimeCard,
+    PublicAnimeComment,
+    PublicAnimeCommentsResult,
     PublicAnimeMeta,
     PublicHomeData,
     PublicSearchResult,
 } from "@/lib/types/public";
 
-export type PublicAnimeSort = "new" | "old" | "title" | "release" | "views";
+export type PublicAnimeSort = "new" | "old" | "title" | "release" | "popular";
 
 export interface PublicAnimeListParams {
     search?: string;
@@ -74,6 +76,53 @@ const publicEndpoints = animiApi.injectEndpoints({
                 params: { query, limit },
             }),
         }),
+        getPublicAnimeComments: builder.query<
+            PublicAnimeCommentsResult,
+            { slug: string; page?: number; limit?: number; sort?: "new" | "old" | "top" }
+        >({
+            query: ({ slug, page = 1, limit = 20, sort = "new" }) => ({
+                url: `/public/anime/${encodeURIComponent(slug)}/comments`,
+                params: { page, limit, sort },
+            }),
+            providesTags: (_result, _error, { slug }) => [{ type: "PublicComments", id: slug }],
+        }),
+        createPublicAnimeComment: builder.mutation<
+            PublicAnimeComment,
+            { slug: string; text: string; parentId?: number }
+        >({
+            query: ({ slug, ...body }) => ({
+                url: `/public/anime/${encodeURIComponent(slug)}/comments`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { slug }) => [{ type: "PublicComments", id: slug }],
+        }),
+        reactPublicAnimeComment: builder.mutation<
+            { likes: number; dislikes: number; reaction: "LIKE" | "DISLIKE" | null },
+            { slug: string; commentId: number; type: "LIKE" | "DISLIKE" }
+        >({
+            query: ({ slug, commentId, type }) => ({
+                url: `/public/anime/${encodeURIComponent(slug)}/comments/${commentId}/reaction`,
+                method: "POST",
+                body: { type },
+            }),
+            invalidatesTags: (_result, _error, { slug }) => [{ type: "PublicComments", id: slug }],
+        }),
+        getMyPublicAnimeReview: builder.query<{ rating: number | null }, string>({
+            query: (slug) => `/public/anime/${encodeURIComponent(slug)}/review/me`,
+            providesTags: (_result, _error, slug) => [{ type: "PublicReview", id: slug }],
+        }),
+        ratePublicAnime: builder.mutation<
+            { rating: number; averageReviewRating: number | null; reviewsCount: number },
+            { slug: string; rating: number }
+        >({
+            query: ({ slug, rating }) => ({
+                url: `/public/anime/${encodeURIComponent(slug)}/review`,
+                method: "PUT",
+                body: { rating },
+            }),
+            invalidatesTags: (_result, _error, { slug }) => [{ type: "PublicReview", id: slug }],
+        }),
     }),
 });
 
@@ -83,4 +132,9 @@ export const {
     useGetPublicAnimesQuery,
     useLazyGetRandomAnimeQuery,
     useLazySearchPublicQuery,
+    useGetPublicAnimeCommentsQuery,
+    useCreatePublicAnimeCommentMutation,
+    useReactPublicAnimeCommentMutation,
+    useGetMyPublicAnimeReviewQuery,
+    useRatePublicAnimeMutation,
 } = publicEndpoints;

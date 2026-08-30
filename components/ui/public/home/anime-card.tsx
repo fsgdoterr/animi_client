@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
 import type { PublicAnimeCard } from "@/lib/types/public";
-import { imageSrc } from "@/lib/utils/public-anime";
+import { animeInstallmentLabel, animeTypeLabels, imageSrc } from "@/lib/utils/public-anime";
 
 export default function AnimeCard({ anime }: { anime: PublicAnimeCard }) {
     const poster = imageSrc(anime.poster?.path);
@@ -37,6 +37,14 @@ export default function AnimeCard({ anime }: { anime: PublicAnimeCard }) {
                 <h3 className="truncate text-[14px] font-medium text-white/82 transition group-hover:text-white sm:text-[15px]">
                     {anime.title}
                 </h3>
+                <p className="mt-1 truncate text-[11px] text-white/36">
+                    {[
+                        animeTypeLabels[anime.type],
+                        animeInstallmentLabel(anime.seasonNumber, anime.partNumber),
+                    ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                </p>
                 <div className="mt-2">
                     <AnimeBadges anime={anime} compact countsOnly />
                 </div>

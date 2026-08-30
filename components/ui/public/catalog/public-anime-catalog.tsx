@@ -39,7 +39,7 @@ import { AnimeStatus } from "@/lib/types/entites/anime";
 import cn from "@/lib/utils/cn";
 
 const sortOptions: SelectOption<PublicAnimeSort>[] = [
-    { value: "views", label: "Найбільше переглядів" },
+    { value: "popular", label: "Популярні" },
     { value: "new", label: "Найновіші" },
     { value: "release", label: "За датою релізу" },
     { value: "title", label: "За назвою" },

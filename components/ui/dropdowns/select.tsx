@@ -31,6 +31,7 @@ interface SelectProps<T extends string> {
     name?: string;
 
     className?: string;
+    buttonClassName?: string;
     dropdownClassName?: string;
 }
 
@@ -43,6 +44,7 @@ export function Select<T extends string>({
     disabled,
     name,
     className,
+    buttonClassName,
     dropdownClassName,
 }: SelectProps<T>) {
     const id = useId();
@@ -155,6 +157,7 @@ export function Select<T extends string>({
                     "hover:bg-[#1a2026]",
                     "focus:border-white/14",
                     "disabled:cursor-not-allowed disabled:opacity-50",
+                    buttonClassName,
                 )}
             >
                 <span className="min-w-0 flex-1 truncate">

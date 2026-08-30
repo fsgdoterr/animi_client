@@ -35,3 +35,13 @@ export function compactDescription(value?: string | null, maxLength = 220) {
     if (normalized.length <= maxLength) return normalized;
     return `${normalized.slice(0, maxLength).trimEnd()}…`;
 }
+
+export function animeInstallmentLabel(seasonNumber?: number | null, partNumber?: number | null) {
+    return [
+        seasonNumber ? `Сезон ${seasonNumber}` : null,
+        partNumber ? `Частина ${partNumber}` : null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
+}
+
