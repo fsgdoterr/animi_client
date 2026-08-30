@@ -89,14 +89,6 @@ body {
   --public-header-offset: 96px;
 }
 
-@media (max-width: 767px) {
-  .public-shell {
-    /* The mobile navigation is a floating bottom dock. Reserve its footprint so
-       the final cards/footer never end up hidden underneath it. */
-    padding-bottom: calc(88px + env(safe-area-inset-bottom));
-  }
-}
-
 .public-auth-input {
   min-width: 0;
   flex: 1;

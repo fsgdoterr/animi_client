@@ -64,7 +64,7 @@ function Badge({
     const toneClass = {
         neutral: "border-white/12 bg-white/8 text-white/62",
         dub: "border-emerald-400/32 bg-emerald-400/10 text-emerald-300",
-        sub: "border-amber-400/32 bg-amber-400/10 text-amber-300",
+        sub: "text-(--primary-2) [border-color:color-mix(in_srgb,var(--primary-2)_34%,transparent)] [background-color:color-mix(in_srgb,var(--primary-2)_11%,transparent)]",
         rating: "border-amber-400/30 bg-amber-400/10 text-amber-300",
         ongoing: "border-sky-400/30 bg-sky-400/10 text-sky-300",
     }[tone];

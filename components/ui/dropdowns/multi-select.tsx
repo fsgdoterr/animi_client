@@ -233,7 +233,7 @@ export function MultiSelect<T extends string>(props: MultiSelectProps<T>) {
                     aria-multiselectable="true"
                     className={cn(
                         "absolute left-0 top-[calc(100%+6px)] z-50",
-                        "min-w-full overflow-hidden rounded-lg",
+                        "min-w-full max-h-[170px] overflow-x-hidden overflow-y-auto rounded-lg",
                         "border border-white/[0.055] bg-[#25313b]",
                         "p-1 shadow-xl shadow-black/30",
                         dropdownClassName,
@@ -249,7 +249,7 @@ export function MultiSelect<T extends string>(props: MultiSelectProps<T>) {
                                 disabled={option.disabled}
                                 onClick={() => handleOptionClick(option)}
                                 className={cn(
-                                    "relative flex min-h-9 w-full items-center gap-2 rounded-md",
+                                    "relative flex h-9 w-full items-center gap-2 rounded-md",
                                     "px-3 py-1.5 text-left text-[15px] transition",
 
                                     state === "neutral" &&
@@ -283,7 +283,7 @@ export function MultiSelect<T extends string>(props: MultiSelectProps<T>) {
                                     )}
                                 />
 
-                                <span className="min-w-0 flex-1">
+                                <span className="min-w-0 flex-1 truncate">
                                     {option.label}
                                 </span>
 

@@ -11,6 +11,9 @@ export interface PublicAnimeCard {
     poster: Image | null;
     rating: AnimeRating | null;
     description: string | null;
+    country: string | null;
+    studio: string | null;
+    producers: { id: number; title: string }[];
     genres: Genre[];
     releaseDate: string | null;
     episodesTotal: number | null;
@@ -21,6 +24,7 @@ export interface PublicAnimeCard {
     subEpisodesCount: number;
     latestVariantAt?: string;
     availableDubTypes: DubType[];
+    averageReviewRating?: number | null;
     _count: {
         episodes: number;
         reviews: number;
@@ -94,14 +98,20 @@ export interface AdminHomeSliderItem {
 
 export interface PublicAnimeDetails extends PublicAnimeCard {
     additionalImages: Image[];
-    country: string | null;
     endDate: string | null;
     seasonNumber: number | null;
     partNumber: number | null;
     duration: number | null;
-    studio: string | null;
     mal: string | null;
     al: string | null;
+}
+
+
+export interface PublicAnimeMeta {
+    genres: { id: number; slug: string; title: string }[];
     producers: { id: number; title: string }[];
-    averageReviewRating: number | null;
+    dubTeams: { id: number; title: string }[];
+    countries: string[];
+    studios: string[];
+    releaseYears: number[];
 }

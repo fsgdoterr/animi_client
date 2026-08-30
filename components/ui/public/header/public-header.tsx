@@ -181,7 +181,7 @@ export default function PublicHeader() {
                             Усі аніме
                         </Link>
                         <Link
-                            href="/animes?status=ONGOING"
+                            href="/animes?preset=ongoing"
                             className="hidden rounded-lg px-2 py-2 text-[14px] font-medium uppercase text-white/78 transition hover:bg-white/[0.05] hover:text-white lg:block"
                         >
                             Онгоїнги
@@ -230,7 +230,7 @@ export default function PublicHeader() {
             )}
 
             {mobileSearchOpen && (
-                <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[75] md:hidden">
+                <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[95] md:hidden">
                     <div className="mx-auto flex h-[min(520px,calc(100dvh-118px))] w-full max-w-[560px] flex-col overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#10161b]/98 p-3 shadow-[0_28px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl">
                         <div className="flex shrink-0 items-center justify-between px-1 pb-2.5">
                             <div>
@@ -285,7 +285,7 @@ export default function PublicHeader() {
             )}
 
             {mobileCatalogOpen && (
-                <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[75] md:hidden">
+                <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[95] md:hidden">
                     <div className="mx-auto w-full max-w-[430px] overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#10161b]/98 p-2 shadow-[0_28px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl">
                         <Link
                             href="/animes"
@@ -301,7 +301,7 @@ export default function PublicHeader() {
                             </span>
                         </Link>
                         <Link
-                            href="/animes?status=ONGOING"
+                            href="/animes?preset=ongoing"
                             onClick={closeMobilePanels}
                             className="flex items-center gap-3 rounded-[18px] px-3 py-3.5 transition active:bg-white/[0.05]"
                         >
@@ -627,7 +627,7 @@ function MobileUserMenu({
 }) {
     const canOpenAdmin = user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
     return (
-        <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[75] md:hidden">
+        <div className="fixed inset-x-3 bottom-[calc(86px+env(safe-area-inset-bottom))] z-[95] md:hidden">
             <div className="mx-auto w-full max-w-[430px] overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#10161b]/98 shadow-[0_28px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl">
                 <UserMenuHeader user={user} loggingOut={loggingOut} onLogout={onLogout} mobile />
                 <UserMenuLinks user={user} canOpenAdmin={canOpenAdmin} mobile onNavigate={onNavigate} />
