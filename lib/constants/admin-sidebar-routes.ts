@@ -1,5 +1,6 @@
 import {
     Clapperboard,
+    GalleryHorizontalEnd,
     Hash,
     Image as ImageIcon,
     LayoutDashboard,
@@ -15,6 +16,7 @@ export const adminSidebarRoutes = [
         items: [
             { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
             { href: "/admin/animes", label: "Аніме", icon: Clapperboard },
+            { href: "/admin/home-slider", label: "Слайдер головної", icon: GalleryHorizontalEnd },
             { href: "/admin/users", label: "Користувачі", icon: Users },
         ],
     },

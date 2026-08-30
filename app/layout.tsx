@@ -1,3 +1,6 @@
+import "swiper/css";
+import "swiper/css/effect-fade";
+import "swiper/css/pagination";
 import "./globals.css";
 
 import Providers from "@/components/providers/providers";

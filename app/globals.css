@@ -32,6 +32,11 @@
   --transparent: #ffffff00;
 }
 
+html {
+  /* Keep the page width stable when a modal locks document scrolling. */
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   @apply bg-(--bg-1) text-white;
@@ -77,5 +82,54 @@ body {
 
   .admin-nav-scroll::-webkit-scrollbar {
     display: none;
+  }
+}
+
+.public-shell {
+  --public-header-offset: 96px;
+}
+
+@media (max-width: 767px) {
+  .public-shell {
+    /* The mobile navigation is a floating bottom dock. Reserve its footprint so
+       the final cards/footer never end up hidden underneath it. */
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+.public-auth-input {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  outline: none;
+}
+
+.public-auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.27);
+}
+
+.public-hero-swiper .swiper-pagination {
+  bottom: 44px !important;
+}
+
+.public-hero-swiper .swiper-pagination-bullet {
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  opacity: 1;
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.public-hero-swiper .swiper-pagination-bullet-active {
+  width: 36px;
+  background: var(--primary);
+}
+
+@media (max-width: 639px) {
+  .public-hero-swiper .swiper-pagination {
+    bottom: 32px !important;
   }
 }

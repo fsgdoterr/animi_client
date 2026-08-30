@@ -1,84 +1,28 @@
-import Link from "next/link";
-
-import LoginForm from "@/components/ui/auth/login-form";
-import LogoutButton from "@/components/ui/auth/logout-button";
-import { getCurrentUser } from "@/lib/auth/server";
-import { UserRole } from "@/lib/constants/permissions";
+import HomeContent from "@/components/ui/public/home/home-content";
+import { backendUrl } from "@/lib/constants/api";
+import type { PublicHomeData } from "@/lib/types/public";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-    const user = await getCurrentUser();
+const emptyHome: PublicHomeData = {
+    slider: [],
+    latestAnime: [],
+    latestEpisodes: [],
+};
 
-    const canOpenAdmin =
-        user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
-
-    return (
-        <div className="min-h-full bg-[radial-gradient(circle_at_top,#1d2530_0%,#0d1117_38%,#08080d_75%)] px-5 py-10">
-            <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-5xl items-center justify-center">
-                <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.055] p-7 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-9">
-                    <div className="mb-8">
-                        <div className="mb-4 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">
-                            animi
-                        </div>
-
-                        <h1 className="text-3xl font-semibold tracking-tight">
-                            {user
-                                ? `Привіт, ${user.displayName || user.username}`
-                                : "Вхід до облікового запису"}
-                        </h1>
-
-                        <p className="mt-2 text-sm leading-6 text-white/45">
-                            {user
-                                ? "Базова сторінка профілю на час розробки клієнта."
-                                : "Авторизуйтеся, щоб продовжити."}
-                        </p>
-                    </div>
-
-                    {user ? (
-                        <div className="space-y-6">
-                            <div className="grid gap-3 rounded-2xl border border-white/8 bg-black/15 p-4 text-sm">
-                                <InfoRow
-                                    label="Ім’я користувача"
-                                    value={user.username}
-                                />
-                                <InfoRow label="Email" value={user.email} />
-                                <InfoRow label="Роль" value={user.role} />
-                                <InfoRow
-                                    label="ID користувача"
-                                    value={`#${user.id}`}
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                <LogoutButton />
-
-                                {canOpenAdmin && (
-                                    <Link
-                                        href="/admin"
-                                        className="flex-1 rounded-xl bg-(--primary) px-4 py-3 text-center text-sm font-semibold transition hover:bg-(--primary-3)"
-                                    >
-                                        Адмінпанель
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <LoginForm />
-                    )}
-                </section>
-            </div>
-        </div>
-    );
+async function getHomeData(): Promise<PublicHomeData> {
+    try {
+        const response = await fetch(`${backendUrl}/api/public/anime/home`, {
+            cache: "no-store",
+        });
+        if (!response.ok) return emptyHome;
+        return (await response.json()) as PublicHomeData;
+    } catch {
+        return emptyHome;
+    }
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="flex items-center justify-between gap-4">
-            <span className="text-white/35">{label}</span>
-            <span className="min-w-0 truncate text-right text-white/80">
-                {value}
-            </span>
-        </div>
-    );
+export default async function Home() {
+    const data = await getHomeData();
+    return <HomeContent data={data} />;
 }

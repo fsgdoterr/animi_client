@@ -6,11 +6,25 @@ interface SigninRequest {
     password: string;
 }
 
+interface SignupRequest {
+    email: string;
+    username: string;
+    password: string;
+}
+
 const animiAuthEndpoints = animiApi.injectEndpoints({
     endpoints: (builder) => ({
         getMe: builder.query<PrivateUser, void>({
             query: () => "/auth/me",
             providesTags: ["Me"],
+        }),
+        signup: builder.mutation<PrivateUser, SignupRequest>({
+            query: (body) => ({
+                url: "/auth/signup",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: ["Me"],
         }),
         signin: builder.mutation<PrivateUser, SigninRequest>({
             query: (body) => ({
@@ -33,5 +47,9 @@ const animiAuthEndpoints = animiApi.injectEndpoints({
     }),
 });
 
-export const { useGetMeQuery, useSigninMutation, useLazyLogoutQuery } =
-    animiAuthEndpoints;
+export const {
+    useGetMeQuery,
+    useSignupMutation,
+    useSigninMutation,
+    useLazyLogoutQuery,
+} = animiAuthEndpoints;

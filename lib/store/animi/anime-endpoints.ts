@@ -7,9 +7,25 @@ import type {
     AnimeListResult,
     AnimePayload,
 } from "@/lib/types/entites/anime";
+import type { AdminHomeSliderItem } from "@/lib/types/public";
 
 const animiAnimeEndpoints = animiApi.injectEndpoints({
     endpoints: (builder) => ({
+        getHomeSlider: builder.query<AdminHomeSliderItem[], void>({
+            query: () => "/anime/home-slider",
+            providesTags: ["HomeSlider"],
+        }),
+        updateHomeSlider: builder.mutation<
+            AdminHomeSliderItem[],
+            { items: { animeId: number; imageId?: number | null }[] }
+        >({
+            query: (body) => ({
+                url: "/anime/home-slider",
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: ["HomeSlider"],
+        }),
         getAnimes: builder.query<AnimeListResult, AnimeListParams | void>({
             query: (params) => ({
                 url: "/anime",
@@ -62,6 +78,7 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
                 { type: "Anime", id },
                 { type: "Anime", id: "LIST" },
                 { type: "Stats" },
+                "HomeSlider",
             ],
         }),
         deleteAnime: builder.mutation<void, number>({
@@ -73,12 +90,15 @@ const animiAnimeEndpoints = animiApi.injectEndpoints({
                 { type: "Anime", id },
                 { type: "Anime", id: "LIST" },
                 { type: "Stats" },
+                "HomeSlider",
             ],
         }),
     }),
 });
 
 export const {
+    useGetHomeSliderQuery,
+    useUpdateHomeSliderMutation,
     useGetAnimesQuery,
     useGetAnimeQuery,
     useLazyGetAnimeQuery,
