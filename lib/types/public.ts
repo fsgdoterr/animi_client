@@ -169,3 +169,106 @@ export interface PublicAnimeMeta {
     studios: string[];
     releaseYears: number[];
 }
+
+export interface PublicUserProfileUser {
+    id: number;
+    username: string;
+    displayName: string | null;
+    avatar: Image | null;
+    createdAt: string;
+}
+
+export interface PublicUserAnime {
+    id: number;
+    slug: string;
+    title: string;
+    originalTitle: string | null;
+    engTitle: string | null;
+    poster: Image | null;
+    type: AnimeType;
+    status: AnimeStatus;
+    episodesTotal: number | null;
+}
+
+export interface PublicPlaylistSummary {
+    id: number;
+    slug: string;
+    title: string;
+    description: string | null;
+    image: Image | null;
+    previewAnime: PublicUserAnime | null;
+    createdAt: string;
+    updatedAt: string;
+    _count: { items: number };
+}
+
+export interface PublicUserProfile {
+    user: PublicUserProfileUser;
+    stats: {
+        reviews: number;
+        comments: number;
+        playlists: number;
+        listItems: number;
+    };
+    playlists: PublicPlaylistSummary[];
+}
+
+export type PublicUserActivityType =
+    | "VIEW"
+    | "COMMENT"
+    | "REVIEW"
+    | "PLAYLIST_CREATED"
+    | "PLAYLIST_ITEM_ADDED";
+
+export interface PublicUserActivityItem {
+    id: string;
+    type: PublicUserActivityType;
+    occurredAt: string;
+    anime?: PublicUserAnime;
+    comment?: { id: number; text: string };
+    rating?: number;
+    playlist?: { id: number; slug: string; title: string };
+    description?: string | null;
+}
+
+export interface PublicUserActivityResult {
+    items: PublicUserActivityItem[];
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+}
+
+export interface PublicPlaylistImagesResult {
+    items: Image[];
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+}
+
+export interface PublicPlaylistItem {
+    id: number;
+    order: number;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    anime: PublicUserAnime;
+}
+
+export interface PublicPlaylistDetail {
+    id: number;
+    slug: string;
+    title: string;
+    description: string | null;
+    image: Image | null;
+    createdAt: string;
+    updatedAt: string;
+    user: {
+        id: number;
+        username: string;
+        displayName: string | null;
+        avatar: Image | null;
+    };
+    items: PublicPlaylistItem[];
+}

@@ -7,7 +7,13 @@ import type {
     PublicAnimeCommentsResult,
     PublicAnimeMeta,
     PublicHomeData,
+    PublicPlaylistDetail,
+    PublicPlaylistImagesResult,
+    PublicPlaylistItem,
+    PublicPlaylistSummary,
     PublicSearchResult,
+    PublicUserActivityResult,
+    PublicUserProfile,
 } from "@/lib/types/public";
 
 export type PublicAnimeSort = "new" | "old" | "title" | "release" | "popular";
@@ -108,6 +114,110 @@ const publicEndpoints = animiApi.injectEndpoints({
             }),
             invalidatesTags: (_result, _error, { slug }) => [{ type: "PublicComments", id: slug }],
         }),
+        recordPublicAnimeView: builder.mutation<{ recorded: boolean }, string>({
+            query: (slug) => ({
+                url: `/public/anime/${encodeURIComponent(slug)}/view`,
+                method: "POST",
+            }),
+        }),
+        getPublicUserProfile: builder.query<PublicUserProfile, string>({
+            query: (username) => `/public/users/${encodeURIComponent(username)}`,
+            providesTags: (_result, _error, username) => [{ type: "PublicUser", id: username }],
+        }),
+        getPublicUserActivity: builder.query<
+            PublicUserActivityResult,
+            { username: string; page?: number; limit?: number }
+        >({
+            query: ({ username, page = 1, limit = 20 }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/activity`,
+                params: { page, limit },
+            }),
+            providesTags: (_result, _error, { username }) => [{ type: "PublicUser", id: `activity-${username}` }],
+        }),
+        getPublicPlaylist: builder.query<PublicPlaylistDetail, { username: string; slug: string }>({
+            query: ({ username, slug }) =>
+                `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}`,
+            providesTags: (_result, _error, { username, slug }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+            ],
+        }),
+        getPublicPlaylistImages: builder.query<
+            PublicPlaylistImagesResult,
+            { username: string; page?: number; limit?: number; search?: string }
+        >({
+            query: ({ username, page = 1, limit = 18, search }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/playlist-images`,
+                params: { page, limit, search: search || undefined },
+            }),
+        }),
+        createPublicPlaylist: builder.mutation<
+            PublicPlaylistSummary,
+            { username: string; title: string; description?: string; imageId?: number }
+        >({
+            query: ({ username, ...body }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { username }) => [
+                { type: "PublicUser", id: username },
+                { type: "PublicUser", id: `activity-${username}` },
+            ],
+        }),
+        addPublicPlaylistItem: builder.mutation<
+            PublicPlaylistItem,
+            { username: string; slug: string; animeId: number; description?: string }
+        >({
+            query: ({ username, slug, ...body }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { username, slug }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+                { type: "PublicUser", id: username },
+                { type: "PublicUser", id: `activity-${username}` },
+            ],
+        }),
+        updatePublicPlaylistItem: builder.mutation<
+            PublicPlaylistItem,
+            { username: string; slug: string; itemId: number; description?: string }
+        >({
+            query: ({ username, slug, itemId, ...body }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items/${itemId}`,
+                method: "PATCH",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { username, slug }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+            ],
+        }),
+        reorderPublicPlaylistItems: builder.mutation<
+            { orderedItemIds: number[] },
+            { username: string; slug: string; orderedItemIds: number[] }
+        >({
+            query: ({ username, slug, orderedItemIds }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items/order`,
+                method: "PUT",
+                body: { orderedItemIds },
+            }),
+            invalidatesTags: (_result, _error, { username, slug }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+            ],
+        }),
+        removePublicPlaylistItem: builder.mutation<
+            void,
+            { username: string; slug: string; itemId: number }
+        >({
+            query: ({ username, slug, itemId }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items/${itemId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, { username, slug }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+                { type: "PublicUser", id: username },
+            ],
+        }),
         getMyPublicAnimeReview: builder.query<{ rating: number | null }, string>({
             query: (slug) => `/public/anime/${encodeURIComponent(slug)}/review/me`,
             providesTags: (_result, _error, slug) => [{ type: "PublicReview", id: slug }],
@@ -137,4 +247,15 @@ export const {
     useReactPublicAnimeCommentMutation,
     useGetMyPublicAnimeReviewQuery,
     useRatePublicAnimeMutation,
+    useRecordPublicAnimeViewMutation,
+    useGetPublicUserProfileQuery,
+    useGetPublicUserActivityQuery,
+    useLazyGetPublicUserActivityQuery,
+    useGetPublicPlaylistImagesQuery,
+    useGetPublicPlaylistQuery,
+    useCreatePublicPlaylistMutation,
+    useAddPublicPlaylistItemMutation,
+    useUpdatePublicPlaylistItemMutation,
+    useReorderPublicPlaylistItemsMutation,
+    useRemovePublicPlaylistItemMutation,
 } = publicEndpoints;

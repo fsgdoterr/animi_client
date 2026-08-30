@@ -11,11 +11,13 @@ import {
     X,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Select } from "@/components/ui/dropdowns/select";
 import AnimeStrip from "@/components/ui/public/anime/anime-strip";
 import { DubType } from "@/lib/types/entites/anime";
+import { useAppSelector } from "@/lib/hooks/redux";
+import { useRecordPublicAnimeViewMutation } from "@/lib/store/animi/public-endpoints";
 import type {
     PublicAnimeDetails,
     PublicAnimeEpisode,
@@ -38,12 +40,21 @@ export default function AnimeWatch({ anime }: { anime: PublicAnimeDetails }) {
         firstEpisode ? Math.floor((episodes.length - 1) / EPISODES_PER_PAGE) : 0,
     );
     const [expanded, setExpanded] = useState(false);
+    const user = useAppSelector((state) => state.auth.user);
+    const [recordView] = useRecordPublicAnimeViewMutation();
+    const recordedViewRef = useRef(false);
 
     const selectedEpisode =
         episodes.find((episode) => episode.id === selectedEpisodeId) ?? firstEpisode;
     const selectedVariant =
         selectedEpisode?.variants.find((variant) => variant.id === selectedVariantId) ??
         getPreferredVariant(selectedEpisode?.variants ?? []);
+
+    useEffect(() => {
+        if (!user || recordedViewRef.current || !selectedVariant?.endpoint) return;
+        recordedViewRef.current = true;
+        void recordView(anime.slug);
+    }, [anime.slug, recordView, selectedVariant?.endpoint, user]);
 
     useEffect(() => {
         const desktop = window.matchMedia("(min-width: 1280px)");

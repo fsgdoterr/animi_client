@@ -9,6 +9,7 @@ import {
     ShieldOff,
     Tags,
     Trash2,
+    ListVideo,
     UserRound,
 } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
@@ -103,6 +104,12 @@ export default function ImageCard({
                     <UserUsageRow
                         items={image.avatars ?? []}
                         total={image._count?.avatars ?? 0}
+                    />
+                    <UsageRow
+                        icon={<ListVideo size={14} />}
+                        label="Списки"
+                        items={image.playlistCovers ?? []}
+                        total={image._count?.playlistCovers ?? 0}
                     />
                 </div>
 
@@ -221,7 +228,8 @@ export function getImageUsageCount(image: PrivateImage) {
         (image._count?.avatars ?? 0) +
         (image._count?.genres ?? 0) +
         (image._count?.animes ?? 0) +
-        (image._count?.animeAdditionalImages ?? 0)
+        (image._count?.animeAdditionalImages ?? 0) +
+        (image._count?.playlistCovers ?? 0)
     );
 }
 

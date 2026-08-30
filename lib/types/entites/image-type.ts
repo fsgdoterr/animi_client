@@ -25,9 +25,11 @@ export interface PrivateImage extends Image {
         genres: number;
         animes: number;
         animeAdditionalImages: number;
+        playlistCovers?: number;
     };
     avatars?: ImageUsageUser[];
     genres?: ImageUsageEntity[];
     animes?: ImageUsageEntity[];
     animeAdditionalImages?: ImageUsageEntity[];
+    playlistCovers?: ImageUsageEntity[];
 }

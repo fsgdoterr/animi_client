@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
     ChevronLeft,
     ChevronRight,
@@ -170,6 +171,9 @@ function CommentThread({
     onReply: (parentId: number, text: string) => Promise<boolean>;
     onReaction: (commentId: number, type: "LIKE" | "DISLIKE") => Promise<void>;
 }) {
+    const [visibleReplies, setVisibleReplies] = useState(3);
+    const hiddenReplies = Math.max(0, comment.replies.length - visibleReplies);
+
     return (
         <div>
             <CommentEntry
@@ -181,7 +185,7 @@ function CommentThread({
 
             {comment.replies.length > 0 && (
                 <div className="ml-5 mt-4 space-y-4 border-l border-white/[0.045] pl-4 sm:ml-9 sm:pl-5">
-                    {comment.replies.map((reply) => (
+                    {comment.replies.slice(0, visibleReplies).map((reply) => (
                         <CommentEntry
                             key={reply.id}
                             comment={reply}
@@ -191,6 +195,15 @@ function CommentThread({
                             nested
                         />
                     ))}
+                    {hiddenReplies > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setVisibleReplies((value) => Math.min(comment.replies.length, value + 5))}
+                            className="ml-11 flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] text-(--primary-3) transition hover:bg-white/[0.03] hover:text-(--primary)"
+                        >
+                            Показати ще {Math.min(5, hiddenReplies)} {hiddenReplies === 1 ? "відповідь" : "відповідей"}
+                        </button>
+                    )}
                 </div>
             )}
         </div>
@@ -225,11 +238,19 @@ function CommentEntry({
             <Avatar user={comment.user} />
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="text-[12px] font-medium text-white/70">
+                    <Link
+                        href={`/users/${encodeURIComponent(comment.user.username)}`}
+                        className="text-[12px] font-medium text-white/70 transition hover:text-(--primary-3)"
+                    >
                         {comment.user.displayName || comment.user.username}
-                    </span>
+                    </Link>
                     {comment.user.displayName && (
-                        <span className="text-[10px] text-white/24">@{comment.user.username}</span>
+                        <Link
+                            href={`/users/${encodeURIComponent(comment.user.username)}`}
+                            className="text-[10px] text-white/24 transition hover:text-(--primary-3)"
+                        >
+                            @{comment.user.username}
+                        </Link>
                     )}
                     <RoleBadge role={comment.user.role} />
                     <span className="text-[10px] text-white/22">{relativeDate(comment.createdAt)}</span>
