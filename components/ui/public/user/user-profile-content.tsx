@@ -8,6 +8,7 @@ import {
     Eye,
     ListPlus,
     LoaderCircle,
+    Lock,
     MessageCircle,
     Plus,
     Star,
@@ -456,6 +457,11 @@ function PlaylistCard({
             <div className="absolute inset-0 bg-gradient-to-r from-[#080d10]/95 via-[#080d10]/72 to-[#080d10]/18" />
             <div className="relative z-10 flex min-h-[112px] flex-col justify-between p-3.5">
                 <div>
+                    {playlist.isPrivate && (
+                        <span className="mb-2 inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/30 px-2 py-1 text-[10px] text-white/55 backdrop-blur-sm">
+                            <Lock size={10} /> Приватний
+                        </span>
+                    )}
                     <h3 className="line-clamp-2 text-[15px] font-medium leading-5 text-white/90">{playlist.title}</h3>
                     {playlist.description && (
                         <p className="mt-1 line-clamp-2 text-[12px] leading-4 text-white/42">{playlist.description}</p>

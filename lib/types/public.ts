@@ -195,6 +195,7 @@ export interface PublicPlaylistSummary {
     slug: string;
     title: string;
     description: string | null;
+    isPrivate: boolean;
     image: Image | null;
     previewAnime: PublicUserAnime | null;
     createdAt: string;
@@ -261,6 +262,7 @@ export interface PublicPlaylistDetail {
     slug: string;
     title: string;
     description: string | null;
+    isPrivate: boolean;
     image: Image | null;
     createdAt: string;
     updatedAt: string;
@@ -271,4 +273,20 @@ export interface PublicPlaylistDetail {
         avatar: Image | null;
     };
     items: PublicPlaylistItem[];
+}
+
+
+export interface PublicBookmark {
+    id: number;
+    createdAt: string;
+    updatedAt: string;
+    anime: PublicUserAnime;
+}
+
+export interface PublicBookmarksResult {
+    items: PublicBookmark[];
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
 }

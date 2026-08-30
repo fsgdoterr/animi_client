@@ -6,6 +6,8 @@ import type {
     PublicAnimeComment,
     PublicAnimeCommentsResult,
     PublicAnimeMeta,
+    PublicBookmark,
+    PublicBookmarksResult,
     PublicHomeData,
     PublicPlaylistDetail,
     PublicPlaylistImagesResult,
@@ -120,6 +122,34 @@ const publicEndpoints = animiApi.injectEndpoints({
                 method: "POST",
             }),
         }),
+        getPublicBookmarks: builder.query<
+            PublicBookmarksResult,
+            { page?: number; limit?: number } | void
+        >({
+            query: (params) => ({
+                url: "/public/bookmarks",
+                params: { page: params?.page ?? 1, limit: params?.limit ?? 30 },
+            }),
+            providesTags: [{ type: "PublicBookmarks", id: "LIST" }],
+        }),
+        getPublicBookmarkIds: builder.query<number[], void>({
+            query: () => "/public/bookmarks/ids",
+            providesTags: [{ type: "PublicBookmarks", id: "LIST" }],
+        }),
+        addPublicBookmark: builder.mutation<PublicBookmark, number>({
+            query: (animeId) => ({
+                url: `/public/bookmarks/${animeId}`,
+                method: "POST",
+            }),
+            invalidatesTags: [{ type: "PublicBookmarks", id: "LIST" }],
+        }),
+        removePublicBookmark: builder.mutation<void, number>({
+            query: (animeId) => ({
+                url: `/public/bookmarks/${animeId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: [{ type: "PublicBookmarks", id: "LIST" }],
+        }),
         getPublicUserProfile: builder.query<PublicUserProfile, string>({
             query: (username) => `/public/users/${encodeURIComponent(username)}`,
             providesTags: (_result, _error, username) => [{ type: "PublicUser", id: username }],
@@ -152,7 +182,7 @@ const publicEndpoints = animiApi.injectEndpoints({
         }),
         createPublicPlaylist: builder.mutation<
             PublicPlaylistSummary,
-            { username: string; title: string; description?: string; imageId?: number }
+            { username: string; title: string; description?: string; imageId?: number; isPrivate?: boolean }
         >({
             query: ({ username, ...body }) => ({
                 url: `/public/users/${encodeURIComponent(username)}/lists`,
@@ -164,19 +194,35 @@ const publicEndpoints = animiApi.injectEndpoints({
                 { type: "PublicUser", id: `activity-${username}` },
             ],
         }),
-        addPublicPlaylistItem: builder.mutation<
-            PublicPlaylistItem,
-            { username: string; slug: string; animeId: number; description?: string }
+        updatePublicPlaylist: builder.mutation<
+            PublicPlaylistSummary,
+            { username: string; slug: string; isPrivate: boolean }
         >({
             query: ({ username, slug, ...body }) => ({
-                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items`,
-                method: "POST",
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}`,
+                method: "PATCH",
                 body,
             }),
             invalidatesTags: (_result, _error, { username, slug }) => [
                 { type: "PublicPlaylist", id: `${username}/${slug}` },
                 { type: "PublicUser", id: username },
                 { type: "PublicUser", id: `activity-${username}` },
+            ],
+        }),
+        addPublicPlaylistItem: builder.mutation<
+            PublicPlaylistItem,
+            { username: string; slug: string; animeId: number; description?: string; removeFromBookmarks?: boolean }
+        >({
+            query: ({ username, slug, ...body }) => ({
+                url: `/public/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}/items`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { username, slug, removeFromBookmarks }) => [
+                { type: "PublicPlaylist", id: `${username}/${slug}` },
+                { type: "PublicUser", id: username },
+                { type: "PublicUser", id: `activity-${username}` },
+                ...(removeFromBookmarks ? [{ type: "PublicBookmarks" as const, id: "LIST" }] : []),
             ],
         }),
         updatePublicPlaylistItem: builder.mutation<
@@ -248,12 +294,17 @@ export const {
     useGetMyPublicAnimeReviewQuery,
     useRatePublicAnimeMutation,
     useRecordPublicAnimeViewMutation,
+    useGetPublicBookmarksQuery,
+    useGetPublicBookmarkIdsQuery,
+    useAddPublicBookmarkMutation,
+    useRemovePublicBookmarkMutation,
     useGetPublicUserProfileQuery,
     useGetPublicUserActivityQuery,
     useLazyGetPublicUserActivityQuery,
     useGetPublicPlaylistImagesQuery,
     useGetPublicPlaylistQuery,
     useCreatePublicPlaylistMutation,
+    useUpdatePublicPlaylistMutation,
     useAddPublicPlaylistItemMutation,
     useUpdatePublicPlaylistItemMutation,
     useReorderPublicPlaylistItemsMutation,

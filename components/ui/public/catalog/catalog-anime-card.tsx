@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
+import BookmarkButton from "@/components/ui/public/shared/bookmark-button";
 import type { PublicAnimeCard } from "@/lib/types/public";
 import {
     animeInstallmentLabel,
@@ -22,7 +23,8 @@ export default function CatalogAnimeCard({ anime }: { anime: PublicAnimeCard }) 
             : null;
 
     return (
-        <article className="group grid min-w-0 grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-2xl border border-white/[0.045] bg-[#0d1318]/70 p-2.5 transition duration-200 hover:border-white/[0.08] hover:bg-[#11181e]/90 sm:grid-cols-[132px_minmax(0,1fr)] sm:gap-4 sm:p-3">
+        <article className="group relative grid min-w-0 grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-2xl border border-white/[0.045] bg-[#0d1318]/70 p-2.5 transition duration-200 hover:border-white/[0.08] hover:bg-[#11181e]/90 sm:grid-cols-[132px_minmax(0,1fr)] sm:gap-4 sm:p-3">
+            <BookmarkButton animeId={anime.id} className="absolute left-4 top-4 z-20 sm:left-[18px] sm:top-[18px]" />
             <Link
                 href={`/anime/${anime.slug}`}
                 className="relative aspect-[3/4] overflow-hidden rounded-xl border border-white/[0.055] bg-[#141a20] shadow-[0_12px_30px_rgba(0,0,0,.2)]"

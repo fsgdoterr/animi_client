@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ImagePlus, LoaderCircle, Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, LoaderCircle, Lock, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -62,6 +62,7 @@ export function PlaylistCreateForm({
     const router = useRouter();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [isPrivate, setIsPrivate] = useState(false);
     const [selectedImage, setSelectedImage] = useState<ImageType | null>(null);
     const [imagePickerOpen, setImagePickerOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export function PlaylistCreateForm({
         if (active) return;
         setTitle("");
         setDescription("");
+        setIsPrivate(false);
         setSelectedImage(null);
         setImagePickerOpen(false);
         setError(null);
@@ -95,6 +97,7 @@ export function PlaylistCreateForm({
                 title: title.trim(),
                 description: description.trim() || undefined,
                 imageId: selectedImage?.id,
+                isPrivate,
             }).unwrap();
             router.push(`/users/${encodeURIComponent(username)}/lists/${encodeURIComponent(playlist.slug)}`);
         } catch (requestError) {
@@ -149,6 +152,23 @@ export function PlaylistCreateForm({
                             className="min-h-24 w-full resize-y rounded-xl border border-white/[0.055] bg-[#171d22] px-3.5 py-3 text-[14px] leading-5 text-white/88 outline-none transition placeholder:text-white/25 focus:border-white/16 focus:bg-[#1a2026]"
                         />
                     </Field>
+
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.055] bg-[#171d22] p-3.5 transition hover:border-white/10">
+                        <input
+                            type="checkbox"
+                            checked={isPrivate}
+                            onChange={(event) => setIsPrivate(event.target.checked)}
+                            className="mt-0.5 size-4 accent-[var(--primary)]"
+                        />
+                        <span className="min-w-0">
+                            <span className="flex items-center gap-1.5 text-[13px] font-medium text-white/74">
+                                <Lock size={14} /> Приватний список
+                            </span>
+                            <span className="mt-1 block text-[12px] leading-4 text-white/29">
+                                Його бачиш лише ти. Він не з’явиться у профілі чи активності для інших користувачів.
+                            </span>
+                        </span>
+                    </label>
 
                     <Field label="Зображення списку">
                         <div className="grid gap-3 sm:grid-cols-[150px_1fr]">

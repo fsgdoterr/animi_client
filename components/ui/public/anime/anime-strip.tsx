@@ -9,6 +9,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperInstance } from "swiper";
 
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
+import BookmarkButton from "@/components/ui/public/shared/bookmark-button";
 import type { PublicAnimeCard } from "@/lib/types/public";
 import { animeInstallmentLabel, animeTypeLabels, imageSrc } from "@/lib/utils/public-anime";
 
@@ -65,36 +66,39 @@ export default function AnimeStrip({
 function StripCard({ anime }: { anime: PublicAnimeCard }) {
     const poster = imageSrc(anime.poster?.path);
     return (
-        <Link href={`/anime/${anime.slug}`} className="group block min-w-0">
-            <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-white/[0.05] bg-[#161d22]">
-                {poster && (
-                    <Image
-                        src={poster}
-                        alt={anime.title}
-                        fill
-                        unoptimized
-                        sizes="260px"
-                        className="object-cover transition duration-500 group-hover:scale-[1.04]"
-                    />
-                )}
-                <div className="absolute inset-0 bg-black/20 transition duration-300 group-hover:bg-black/14" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,10,12,.04)_5%,rgba(7,10,12,.28)_48%,rgba(7,10,12,.94)_100%)]" />
-                <div className="absolute inset-x-0 bottom-0 p-2.5">
-                    <h3 className="truncate text-[13px] font-medium text-white/92">{anime.title}</h3>
-                    <p className="mt-0.5 truncate text-[10px] font-medium text-white/48">
-                        {[
-                            animeTypeLabels[anime.type],
-                            animeInstallmentLabel(anime.seasonNumber, anime.partNumber),
-                        ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                    </p>
-                    <div className="mt-1.5 origin-bottom-left scale-[.92]">
-                        <AnimeBadges anime={anime} compact countsOnly />
+        <div className="group relative min-w-0">
+            <Link href={`/anime/${anime.slug}`} className="block">
+                <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-white/[0.05] bg-[#161d22]">
+                    {poster && (
+                        <Image
+                            src={poster}
+                            alt={anime.title}
+                            fill
+                            unoptimized
+                            sizes="260px"
+                            className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                        />
+                    )}
+                    <div className="absolute inset-0 bg-black/20 transition duration-300 group-hover:bg-black/14" />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,10,12,.04)_5%,rgba(7,10,12,.28)_48%,rgba(7,10,12,.94)_100%)]" />
+                    <div className="absolute inset-x-0 bottom-0 p-2.5">
+                        <h3 className="truncate text-[13px] font-medium text-white/92">{anime.title}</h3>
+                        <p className="mt-0.5 truncate text-[10px] font-medium text-white/48">
+                            {[
+                                animeTypeLabels[anime.type],
+                                animeInstallmentLabel(anime.seasonNumber, anime.partNumber),
+                            ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                        </p>
+                        <div className="mt-1.5 origin-bottom-left scale-[.92]">
+                            <AnimeBadges anime={anime} compact countsOnly />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </Link>
+            </Link>
+            <BookmarkButton animeId={anime.id} className="absolute right-2 top-2 z-10 size-8 rounded-lg" />
+        </div>
     );
 }
 

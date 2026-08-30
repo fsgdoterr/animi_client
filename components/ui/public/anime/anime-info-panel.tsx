@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import AnimeDescription from "@/components/ui/public/anime/anime-description";
 import AnimeRating from "@/components/ui/public/anime/anime-rating";
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
+import BookmarkButton from "@/components/ui/public/shared/bookmark-button";
 import type { PublicAnimeDetails } from "@/lib/types/public";
 import { animeStatusLabels, imageSrc } from "@/lib/utils/public-anime";
 
@@ -60,6 +61,7 @@ export default function AnimeInfoPanel({ anime }: { anime: PublicAnimeDetails })
                 </div>
 
                 <AnimeBadges anime={anime} compact />
+                <div className="hidden md:block"><BookmarkButton animeId={anime.id} variant="action" /></div>
                 <AnimeDescription description={anime.description} />
 
                 <dl className="space-y-1.5 text-[11px] leading-[1.45]">

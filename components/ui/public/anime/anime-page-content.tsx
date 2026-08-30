@@ -8,6 +8,7 @@ import AnimeInfoPanel from "@/components/ui/public/anime/anime-info-panel";
 import AnimeStrip from "@/components/ui/public/anime/anime-strip";
 import AnimeWatch from "@/components/ui/public/anime/anime-watch";
 import AnimeBadges from "@/components/ui/public/shared/anime-badges";
+import BookmarkButton from "@/components/ui/public/shared/bookmark-button";
 import type { PublicAnimeDetails } from "@/lib/types/public";
 import { imageSrc } from "@/lib/utils/public-anime";
 
@@ -47,9 +48,10 @@ export default function AnimePageContent({ anime }: { anime: PublicAnimeDetails 
                     <div className="relative aspect-[3/4] w-[72px] shrink-0 overflow-hidden rounded-xl bg-white/[0.04]">
                         {poster && <Image src={poster} alt={anime.title} fill unoptimized sizes="72px" className="object-cover" />}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <h1 className="line-clamp-2 text-[18px] font-semibold leading-tight text-white/90">{anime.title}</h1>
                         <div className="mt-2"><AnimeBadges anime={anime} compact /></div>
+                        <BookmarkButton animeId={anime.id} variant="action" className="mt-3" />
                     </div>
                 </div>
 

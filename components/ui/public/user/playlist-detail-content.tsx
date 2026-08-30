@@ -7,8 +7,10 @@ import {
     ArrowLeft,
     ArrowUp,
     Check,
+    Globe2,
     ListPlus,
     LoaderCircle,
+    Lock,
     Pencil,
     Plus,
     Trash2,
@@ -22,6 +24,7 @@ import { useAppSelector } from "@/lib/hooks/redux";
 import {
     useRemovePublicPlaylistItemMutation,
     useReorderPublicPlaylistItemsMutation,
+    useUpdatePublicPlaylistMutation,
     useUpdatePublicPlaylistItemMutation,
 } from "@/lib/store/animi/public-endpoints";
 import type { PublicPlaylistDetail, PublicPlaylistItem } from "@/lib/types/public";
@@ -32,12 +35,33 @@ export default function PlaylistDetailContent({ playlist }: { playlist: PublicPl
     const currentUser = useAppSelector((state) => state.auth.user);
     const [items, setItems] = useState(playlist.items);
     const [addOpen, setAddOpen] = useState(false);
+    const [isPrivate, setIsPrivate] = useState(playlist.isPrivate);
     const [error, setError] = useState<string | null>(null);
     const [reorder, reorderState] = useReorderPublicPlaylistItemsMutation();
     const [removeItem, removeState] = useRemovePublicPlaylistItemMutation();
+    const [updatePlaylist, updatePlaylistState] = useUpdatePublicPlaylistMutation();
     const isOwner = currentUser?.id === playlist.user.id;
     const isFull = items.length >= 30;
     const cover = imageSrc(playlist.image?.path || items[0]?.anime.poster?.path);
+
+
+    async function togglePrivacy() {
+        if (updatePlaylistState.isLoading) return;
+        const previous = isPrivate;
+        const next = !previous;
+        setIsPrivate(next);
+        setError(null);
+        try {
+            await updatePlaylist({
+                username: playlist.user.username,
+                slug: playlist.slug,
+                isPrivate: next,
+            }).unwrap();
+        } catch (requestError) {
+            setIsPrivate(previous);
+            setError(getErrorMessage(requestError, "Не вдалося змінити приватність списку."));
+        }
+    }
 
     async function moveItem(index: number, direction: -1 | 1) {
         const target = index + direction;
@@ -105,6 +129,12 @@ export default function PlaylistDetailContent({ playlist }: { playlist: PublicPl
                                 </Link>
                                 <span>·</span>
                                 <span>{items.length}/30 аніме</span>
+                                {isPrivate && (
+                                    <>
+                                        <span>·</span>
+                                        <span className="inline-flex items-center gap-1 text-white/52"><Lock size={11} /> приватний</span>
+                                    </>
+                                )}
                             </div>
                             <h1 className="text-[27px] font-medium leading-tight text-white/95 sm:text-[34px]">{playlist.title}</h1>
                             {playlist.description && (
@@ -113,30 +143,52 @@ export default function PlaylistDetailContent({ playlist }: { playlist: PublicPl
                         </div>
 
                         {isOwner && (
-                            <button
-                                type="button"
-                                onClick={() => setAddOpen(true)}
-                                disabled={isFull}
-                                className="hidden h-10 shrink-0 items-center gap-2 rounded-xl bg-(--primary) px-4 text-[14px] font-medium text-white transition hover:bg-(--primary-3) disabled:cursor-not-allowed disabled:opacity-45 sm:flex"
-                            >
-                                <Plus size={16} />
-                                {isFull ? "Ліміт 30 аніме" : "Додати аніме"}
-                            </button>
+                            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                                <button
+                                    type="button"
+                                    onClick={() => void togglePrivacy()}
+                                    disabled={updatePlaylistState.isLoading}
+                                    className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.075] bg-black/25 px-3.5 text-[13px] text-white/58 backdrop-blur-sm transition hover:bg-black/40 hover:text-white/78 disabled:cursor-wait disabled:opacity-55"
+                                >
+                                    {updatePlaylistState.isLoading ? <LoaderCircle size={15} className="animate-spin" /> : isPrivate ? <Lock size={15} /> : <Globe2 size={15} />}
+                                    {isPrivate ? "Приватний" : "Публічний"}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAddOpen(true)}
+                                    disabled={isFull}
+                                    className="flex h-10 items-center gap-2 rounded-xl bg-(--primary) px-4 text-[14px] font-medium text-white transition hover:bg-(--primary-3) disabled:cursor-not-allowed disabled:opacity-45"
+                                >
+                                    <Plus size={16} />
+                                    {isFull ? "Ліміт 30 аніме" : "Додати аніме"}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
             </section>
 
             {isOwner && (
-                <button
-                    type="button"
-                    onClick={() => setAddOpen(true)}
-                    disabled={isFull}
-                    className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-(--primary) text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-45 sm:hidden"
-                >
-                    <Plus size={16} />
-                    {isFull ? "Ліміт 30 аніме" : "Додати аніме"}
-                </button>
+                <div className="mt-3 grid grid-cols-[auto_1fr] gap-2 sm:hidden">
+                    <button
+                        type="button"
+                        onClick={() => void togglePrivacy()}
+                        disabled={updatePlaylistState.isLoading}
+                        className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/[0.065] bg-white/[0.035] px-3 text-[12px] text-white/55 disabled:cursor-wait disabled:opacity-55"
+                    >
+                        {updatePlaylistState.isLoading ? <LoaderCircle size={15} className="animate-spin" /> : isPrivate ? <Lock size={15} /> : <Globe2 size={15} />}
+                        {isPrivate ? "Приватний" : "Публічний"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setAddOpen(true)}
+                        disabled={isFull}
+                        className="flex h-11 items-center justify-center gap-2 rounded-xl bg-(--primary) text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                        <Plus size={16} />
+                        {isFull ? "Ліміт 30 аніме" : "Додати аніме"}
+                    </button>
+                </div>
             )}
 
             <div className="mt-5">

@@ -78,6 +78,17 @@ export default function PublicHeader() {
         setUserOpen(false);
     }, [pathname]);
 
+    useEffect(() => {
+        const openAuth = () => {
+            setMobileSearchOpen(false);
+            setMobileCatalogOpen(false);
+            setUserOpen(false);
+            setAuthOpen(true);
+        };
+        window.addEventListener("animi:open-auth", openAuth);
+        return () => window.removeEventListener("animi:open-auth", openAuth);
+    }, []);
+
     const normalizedQuery = query.trim();
     const hasSearchQuery = normalizedQuery.length > 0 && normalizedQuery !== "@";
     const searchPending =
@@ -688,7 +699,7 @@ function UserMenuLinks({
         <div className={cn("space-y-0.5 text-[14px] text-white/45", mobile ? "p-2.5" : "p-2")}>
             <MenuLink href={`/users/${encodeURIComponent(user.username)}`} icon={<UserRound size={17} />} onNavigate={onNavigate}>Профіль</MenuLink>
             <MenuLink href="/continue" icon={<PlayCircle size={17} />} onNavigate={onNavigate}>Продовжити дивитись</MenuLink>
-            <MenuLink href="/bookmarks" icon={<Bookmark size={17} />} onNavigate={onNavigate}>Додане</MenuLink>
+            <MenuLink href="/bookmarks" icon={<Bookmark size={17} />} onNavigate={onNavigate}>Закладки</MenuLink>
             {canOpenAdmin && <MenuLink href="/admin" icon={<Shield size={17} />} onNavigate={onNavigate}>Адмінпанель</MenuLink>}
         </div>
     );

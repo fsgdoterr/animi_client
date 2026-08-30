@@ -21,3 +21,10 @@ export const getCurrentUser = cache(async (): Promise<PrivateUser | null> => {
 
     return (await response.json()) as PrivateUser;
 });
+
+export async function getBackendSessionHeaders(): Promise<HeadersInit> {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("userSession");
+
+    return session ? { cookie: `userSession=${session.value}` } : {};
+}
