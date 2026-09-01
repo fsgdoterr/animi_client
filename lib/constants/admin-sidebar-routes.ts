@@ -3,6 +3,7 @@ import {
     GalleryHorizontalEnd,
     Hash,
     Image as ImageIcon,
+    Import,
     LayoutDashboard,
     Mic2,
     Play,
@@ -16,6 +17,7 @@ export const adminSidebarRoutes = [
         items: [
             { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
             { href: "/admin/animes", label: "Аніме", icon: Clapperboard },
+            { href: "/admin/import", label: "Масовий імпорт", icon: Import },
             { href: "/admin/home-slider", label: "Слайдер головної", icon: GalleryHorizontalEnd },
             { href: "/admin/users", label: "Користувачі", icon: Users },
         ],
